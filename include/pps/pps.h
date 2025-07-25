@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <set>
 
 namespace pps
 {
@@ -17,13 +18,18 @@ namespace pps
         std::unordered_map<std::string, std::string> texts;
     };
 
+    struct IncludeCTX
+    {
+        std::set<std::string> prefixes;
+    };
+
     class Task;
     class PPS
     {
         Task *m_task;
 
     public:
-        PPS(const DefineCTX &define, const ReplaceCTX &replace);
+        PPS(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include);
 
         ~PPS();
 
@@ -31,3 +37,4 @@ namespace pps
     };
 
 } // namespace pps
+

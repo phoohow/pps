@@ -15,6 +15,7 @@ namespace pps
     {
         DefineCTX m_condition;
         ReplaceCTX m_replace;
+        IncludeCTX m_include;
 
     public:
         enum class Type
@@ -33,7 +34,7 @@ namespace pps
             sSkip,
         };
 
-        Task(const DefineCTX &define, const ReplaceCTX &replace);
+        Task(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include);
 
         State process(std::string &line, bool isStatic);
 
@@ -84,15 +85,15 @@ namespace pps
         std::string processCondition(const Node *node);
 
         // Include
-        void processsInclude(std::string &line);
+        void processInclude(std::string &line);
         void extractIncludeTask(std::string &line);
 
         // Override
-        void processsOverride(std::string &line);
+        void processOverride(std::string &line);
         void extractOverrideTask(std::string &line);
 
         // Embed
-        void processsEmbed(std::string &line);
+        void processEmbed(std::string &line);
         void extractEmbedTask(std::string &line);
 
         // Prog

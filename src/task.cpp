@@ -3,6 +3,9 @@
 #include <pipeline/generator.h>
 
 #include <regex>
+#include <fstream>
+#include <iostream>
+#include <filesystem>
 
 namespace pps
 {
@@ -10,7 +13,7 @@ namespace pps
     static auto g_task = std::regex(R"(\*<\$([^>]*)>\*)");
 
     static auto g_task_branch = std::regex(R"(branch (.+))");
-    static auto g_task_include = std::regex(R"(include .+)");
+    static auto g_task_include = std::regex(R"(include (.+))");
     static auto g_task_override = std::regex(R"(override .+)");
     static auto g_task_embed = std::regex(R"(embed .+)");
     static auto g_task_prog = std::regex(R"(prog .+)");
@@ -20,8 +23,8 @@ namespace pps
     static auto g_branch_else = std::regex(R"(else)");
     static auto g_branch_endif = std::regex(R"(endif)");
 
-    Task::Task(const DefineCTX &define, const ReplaceCTX &replace)
-        : m_condition(define), m_replace(replace)
+    Task::Task(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include)
+        : m_condition(define), m_replace(replace), m_include(include)
     {
     }
 
@@ -40,13 +43,13 @@ namespace pps
             processState();
             break;
         case Type::tInclude:
-            processsInclude(line);
+            processInclude(line);
             break;
         case Type::tOverride:
-            processsOverride(line);
+            processOverride(line);
             break;
         case Type::tEmbed:
-            processsEmbed(line);
+            processEmbed(line);
             break;
         case Type::tProg:
             processProg(line);
@@ -170,19 +173,42 @@ namespace pps
         return "";
     }
 
-    void Task::processsInclude(std::string &expr)
+    void Task::processInclude(std::string &path)
+    {
+        if (isSkip())
+            return;
+
+        std::string oldPath = path;
+        for (const auto &prefix : m_include.prefixes)
+        {
+            std::string fullPath = prefix + oldPath;
+            if (!std::filesystem::exists(fullPath))
+                continue;
+
+            std::ifstream includeStream(fullPath, std::ios::binary);
+            if (!includeStream)
+                continue;
+
+            includeStream.seekg(0, std::ios::end);
+            std::streamsize size = includeStream.tellg();
+            includeStream.seekg(0, std::ios::beg);
+
+            std::string content(size, '\0');
+            if (includeStream.read(&content[0], size))
+            {
+                path = std::move(content);
+                return;
+            }
+        }
+    }
+
+    void Task::processOverride(std::string &expr)
     {
         if (isSkip())
             return;
     }
 
-    void Task::processsOverride(std::string &expr)
-    {
-        if (isSkip())
-            return;
-    }
-
-    void Task::processsEmbed(std::string &expr)
+    void Task::processEmbed(std::string &expr)
     {
         if (isSkip())
             return;
@@ -209,7 +235,7 @@ namespace pps
         }
         else if (std::regex_search(task, match_branch, g_task_include))
         {
-            line = match_branch[0].str();
+            line = match_branch[1].str();
             return Type::tInclude;
         }
         else if (std::regex_search(task, match_branch, g_task_override))

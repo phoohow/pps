@@ -57,3 +57,16 @@ target("TestTaskBranch", function()
     add_includedirs("src/include")
     add_files("src/test/testTaskBranch.cpp")
 end)
+
+target("TestTaskInclude", function()
+    set_kind("binary")
+    add_deps("PPS")
+    
+    local current_dir = os.scriptdir()
+    -- transform the path to use forward slashes
+    current_dir = current_dir:gsub("\\", "/")
+    
+    add_defines("SOURCE_DIR=\"" .. current_dir .. "\"")
+    add_includedirs("src/include")
+    add_files("src/test/testTaskInclude.cpp")
+end)

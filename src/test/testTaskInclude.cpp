@@ -18,8 +18,15 @@ int main()
         {"@useShadow", "scene.useShadow"},
     };
 
-    pps::PPS lang(conditions, replace, pps::IncludeCTX());
+    pps::IncludeCTX include;
+    include.prefixes = {
+        std::string(SOURCE_DIR) + "/include/",
+    };
+
+    pps::PPS lang(conditions, replace, include);
     std::string line = R"(
+/*<$include pps/pps.h>*/
+
 /*<$branch if @useBaseColorMap>*/
 {
     float4 value = baseColorMap(...);

@@ -6,9 +6,9 @@
 namespace pps
 {
 
-    PPS::PPS(const DefineCTX &define, const ReplaceCTX &replace)
+    PPS::PPS(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include)
     {
-        m_task = new Task(define, replace);
+        m_task = new Task(define, replace, include);
     }
 
     PPS::~PPS()
