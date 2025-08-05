@@ -6,9 +6,9 @@
 namespace pps
 {
 
-    PPS::PPS(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include)
+    PPS::PPS()
     {
-        m_task = new Task(define, replace, include);
+        m_task = new Task();
     }
 
     PPS::~PPS()
@@ -16,11 +16,13 @@ namespace pps
         delete m_task;
     }
 
-    std::string PPS::process(const std::string &source, bool isStatic)
+    std::string PPS::process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include, bool isStatic)
     {
         std::istringstream iss(source);
         std::string line;
         std::string output;
+
+        m_task->setContext(define, replace, include);
 
         while (std::getline(iss, line))
         {

@@ -23,9 +23,15 @@ namespace pps
     static auto g_branch_else = std::regex(R"(else)");
     static auto g_branch_endif = std::regex(R"(endif)");
 
-    Task::Task(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include)
-        : m_condition(define), m_replace(replace), m_include(include)
+    Task::Task()
     {
+    }
+
+    void Task::setContext(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include)
+    {
+        m_condition = define;
+        m_replace = replace;
+        m_include = include;
     }
 
     Task::State Task::process(std::string &line, bool isStatic)

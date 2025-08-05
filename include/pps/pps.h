@@ -29,12 +29,11 @@ namespace pps
         Task *m_task;
 
     public:
-        PPS(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include);
+        PPS();
 
         ~PPS();
 
-        std::string process(const std::string &source, bool isStatic = true);
+        std::string process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include, bool isStatic = true);
     };
 
 } // namespace pps
-

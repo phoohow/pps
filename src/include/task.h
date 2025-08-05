@@ -34,7 +34,9 @@ namespace pps
             sSkip,
         };
 
-        Task(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include);
+        Task();
+
+        void setContext(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include);
 
         State process(std::string &line, bool isStatic);
 
