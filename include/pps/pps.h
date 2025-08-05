@@ -4,36 +4,47 @@
 #include <string>
 #include <set>
 
+#if _WIN32
+#    ifdef PPS_EXPORT_DLL
+#        define PPS_API __declspec(dllexport)
+#    else
+#        define PPS_API __declspec(dllimport)
+#    endif
+#else
+#    define PPS_API
+#endif
+
 namespace pps
 {
-    struct DefineCTX
-    {
-        std::unordered_map<std::string, bool> bools;
-        std::unordered_map<std::string, int> ints;
-        std::unordered_map<std::string, std::string> strings;
-    };
 
-    struct ReplaceCTX
-    {
-        std::unordered_map<std::string, std::string> texts;
-    };
+struct DefineCTX
+{
+    std::unordered_map<std::string, bool>        bools;
+    std::unordered_map<std::string, int>         ints;
+    std::unordered_map<std::string, std::string> strings;
+};
 
-    struct IncludeCTX
-    {
-        std::set<std::string> prefixes;
-    };
+struct ReplaceCTX
+{
+    std::unordered_map<std::string, std::string> texts;
+};
 
-    class Task;
-    class PPS
-    {
-        Task *m_task;
+struct IncludeCTX
+{
+    std::set<std::string> prefixes;
+};
 
-    public:
-        PPS();
+class Task;
+class PPS_API PPS
+{
+    Task* m_task;
 
-        ~PPS();
+public:
+    PPS();
 
-        std::string process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include, bool isStatic = true);
-    };
+    ~PPS();
+
+    std::string process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, const IncludeCTX& include, bool isStatic = true);
+};
 
 } // namespace pps

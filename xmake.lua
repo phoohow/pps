@@ -4,14 +4,12 @@ add_rules("mode.debug", "mode.release")
 add_includedirs("ext/magic_enum/include")
 
 target("PPS", function()
-    set_kind("static")
-    
+    set_kind("shared")
     add_includedirs("include", {public = true})
     add_includedirs("src/include")
+    add_files("src/*.cpp", "src/frontend/*.cpp", "src/pipeline/*.cpp")
     
-    add_files("src/*.cpp")
-    add_files("src/frontend/*.cpp")
-    add_files("src/pipeline/*.cpp")
+    add_defines("PPS_EXPORT_DLL")
 end)
 
 target("TestLexer", function()
