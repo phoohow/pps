@@ -18,11 +18,21 @@ namespace pps
 
     std::string PPS::process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include, bool isStatic)
     {
+        m_task->setContext(define, replace, include);
+        return process(source, isStatic);
+    }
+
+    std::string PPS::process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, sbin::Loader *moduleLoader, const std::string &decryptionKey, bool isStatic)
+    {
+        m_task->setContext(define, replace, moduleLoader, decryptionKey);
+        return process(source, isStatic);
+    }
+
+    std::string PPS::process(const std::string &source, bool isStatic)
+    {
         std::istringstream iss(source);
         std::string line;
         std::string output;
-
-        m_task->setContext(define, replace, include);
 
         while (std::getline(iss, line))
         {

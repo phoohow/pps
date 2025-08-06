@@ -2,6 +2,8 @@
 #include <pipeline/simplifier.h>
 #include <pipeline/generator.h>
 
+#include <sbin/loader.h>
+
 #include <regex>
 #include <fstream>
 #include <iostream>
@@ -32,6 +34,14 @@ namespace pps
         m_condition = define;
         m_replace = replace;
         m_include = include;
+    }
+
+    void Task::setContext(const DefineCTX &define, const ReplaceCTX &replace, sbin::Loader *moduleLoader, const std::string &decryptionKey)
+    {
+        m_condition = define;
+        m_replace = replace;
+        m_loader = moduleLoader;
+        m_decryptionKey = decryptionKey;
     }
 
     Task::State Task::process(std::string &line, bool isStatic)
@@ -184,6 +194,15 @@ namespace pps
         if (isSkip())
             return;
 
+        std::string content;
+        content += extractIncludeFromCTX(path);
+        content += extractIncludeFromLoader(path);
+
+        path = content;
+    }
+
+    std::string Task::extractIncludeFromCTX(const std::string &path)
+    {
         std::string oldPath = path;
         for (const auto &prefix : m_include.prefixes)
         {
@@ -202,10 +221,23 @@ namespace pps
             std::string content(size, '\0');
             if (includeStream.read(&content[0], size))
             {
-                path = std::move(content);
-                return;
+                return std::move(content);
             }
         }
+
+        return "";
+    }
+
+    std::string Task::extractIncludeFromLoader(const std::string &path)
+    {
+        if (m_loader == nullptr)
+            return "";
+
+        auto data = m_loader->getShader(path, m_decryptionKey);
+        if (data == nullptr)
+            return "";
+
+        return std::string(data->data.begin(), data->data.end());
     }
 
     void Task::processOverride(std::string &expr)

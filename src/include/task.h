@@ -17,6 +17,9 @@ namespace pps
         ReplaceCTX m_replace;
         IncludeCTX m_include;
 
+        sbin::Loader *m_loader = nullptr;
+        std::string m_decryptionKey = "";
+
     public:
         enum class Type
         {
@@ -37,6 +40,7 @@ namespace pps
         Task();
 
         void setContext(const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include);
+        void setContext(const DefineCTX &define, const ReplaceCTX &replace, sbin::Loader *moduleLoader, const std::string &decryptionKey);
 
         State process(std::string &line, bool isStatic);
 
@@ -88,7 +92,8 @@ namespace pps
 
         // Include
         void processInclude(std::string &line);
-        void extractIncludeTask(std::string &line);
+        std::string extractIncludeFromCTX(const std::string &path);
+        std::string extractIncludeFromLoader(const std::string &path);
 
         // Override
         void processOverride(std::string &line);

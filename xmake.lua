@@ -2,11 +2,14 @@ set_languages("c++20")
 
 add_rules("mode.debug", "mode.release")
 add_includedirs("ext/magic_enum/include")
+includes("ext/sbin")
 
 target("PPS", function()
     set_kind("shared")
     add_includedirs("include", {public = true})
     add_includedirs("src/include")
+    
+    add_deps("libsbin")
     add_files("src/*.cpp", "src/frontend/*.cpp", "src/pipeline/*.cpp")
     
     add_defines("PPS_EXPORT_DLL")
