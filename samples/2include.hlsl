@@ -1,5 +1,5 @@
 /*<$branch if @useBasic>*/
-/*<$include "util/basic.hlsl">*/
+/*<$include util/basic.hlsl>*/
 /*<$branch endif>*/
 
 void main(out float4 color)

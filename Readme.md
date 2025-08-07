@@ -18,84 +18,9 @@ We provide two modes: dynamic and static.
 5. Prog: An independent language that enables complex logic execution and deeper interaction with source code.
 
 ## Grammar
-### Data Types
-1. bool: (true|false), [0|1]
-2. int: [0-9]+
-3. string: "[a-zA-Z]+"
-4. register: (r|t|s|b)@[a-zA-Z]+
 
-### Variable Types
-1. bool: @_(is|has|use|enable|disable)[a-zA-Z]+
-2. int: @_[a-zA-Z]+
-3. string: @_[a-zA-Z]+
-   
-   
-### Input Types
-1. bool: @(is|has|use|enable|disable)[a-zA-Z]+
-2. int: @[a-zA-Z]+
-3. string: @[a-zA-Z]+
+See [grammar.md](grammar.md) for detailed grammar specifications.
 
-### Operations
-1. Logical: &&, ||, !
-2. Comparison: ==, !=, >, <
-3. Arithmetic: +, -, *, /, %
-4. Bitwise: &, |, >>, <<
-5. Assignment: =
-6. Indexing: []
-   
-   
-### Expressions
-1. boolExpr:
-   bool
-   bool [logical|comparison bool]+
-2. intExpr:
-   int
-   int [arithmetic|bit int]+
-   int [arithmetic|bit boolExpr]+
-   boolExpr
-   boolExpr [arithmetic|bit int]+
-   boolExpr [arithmetic|bit boolExpr]+
-3. stringExpr:
-   string
-   string[] + (string)
-   
-   
-### Task Definitions
-1. **branch**: $branch, if, elif, else, endif, boolExpr
-2. **include**: $include
-3. **override**: $override
-4. [?] **embed**: $embed
-5. [?] **prog**: $prog, export, start, end, if, elif, else, endif, boolExpr, intExpr
-   
-   
-### Branch Task
-1. if endif
-2. if else endif
-3. if elif ... endif
-4. if elif ... else endif
-> See [branch](samples/1branch.hlsl)
-   
-   
-### Include Task
-1. include
-> See [include](samples/2include.hlsl)
-   
-   
-### Override Task
-1. override
-> See [override](samples/3override.hlsl)
-   
-   
-### Embed Task
-1. embed
-> See [embed](samples/4embed.hlsl)
-   
-   
-### Prog Task
-1. prog
-> See [prog](samples/5prog.hlsl)
-   
-   
 ## Pipeline
 PPS offers two distinct workflows for processing source code:
 
@@ -117,3 +42,48 @@ Tokenize → Parse → Simplify → Codegen
 3. **Simplify**: Optimize AST by reducing complex expressions and removing unnecessary nodes
 4. **Codegen**: Generate optimized HLSL output from the simplified AST
 > See [generate](src/test/testGenerator.cpp)
+
+## Command Line Tool
+
+PPS includes a command-line tool `pps` for processing HLSL source files:
+
+```
+pps [task] [mode] [options] <input_file.hlsl>
+```
+
+### Tasks
+- `--codegen` - Code generation (default)
+- `--evaluate` - Evaluation
+
+### Modes
+- `--static` - Static mode (default)
+- `--dynamic` - Dynamic mode
+
+### Options
+- `--db <key=value>` - Define boolean variable (stored in defineCtx)
+- `--di <key=value>` - Define integer variable (stored in defineCtx)
+- `--ds <key=value>` - Define string variable (stored in defineCtx)
+- `--r <key=value>` - Define replaceCtx variable
+- `--i <path>` - Add include path
+- `--input <path>` - Specify input file
+- `--output <path>` - Specify output file
+- `--help` - Show help message
+
+### Examples
+
+```
+# Process a file with default settings (codegen, static)
+pps source.hlsl
+
+# Process a file with dynamic mode
+pps --dynamic source.hlsl
+
+# Process a file with evaluation task and custom variables
+pps --evaluate --db DEBUG=true --di VERBOSE=true --ds DEFAULT_COLOR="float3(1, 0, 0)" source.hlsl
+
+# Process a file with custom include path
+pps --i ./includes source.hlsl
+
+# Process a file with explicit input and output paths
+pps --input source.hlsl --output result.hlsl
+```
