@@ -6,12 +6,12 @@ includes("ext/sbin")
 
 target("PPS", function()
     set_kind("shared")
-    add_includedirs("include", {public = true})
+    add_includedirs("include", { public = true })
     add_includedirs("src/include")
-    
+
     add_deps("libsbin")
     add_files("src/*.cpp", "src/frontend/*.cpp", "src/pipeline/*.cpp")
-    
+
     add_defines("PPS_EXPORT_DLL")
 end)
 
@@ -62,12 +62,19 @@ end)
 target("TestTaskInclude", function()
     set_kind("binary")
     add_deps("PPS")
-    
+
     local current_dir = os.scriptdir()
     -- transform the path to use forward slashes
     current_dir = current_dir:gsub("\\", "/")
-    
+
     add_defines("SOURCE_DIR=\"" .. current_dir .. "\"")
     add_includedirs("src/include")
     add_files("src/test/testTaskInclude.cpp")
+end)
+
+target("TestTaskOverride", function()
+    set_kind("binary")
+    add_deps("PPS")
+    add_includedirs("src/include")
+    add_files("src/test/testTaskOverride.cpp")
 end)

@@ -16,7 +16,7 @@ namespace pps
 
     static auto g_task_branch = std::regex(R"(branch (.+))");
     static auto g_task_include = std::regex(R"(include (.+))");
-    static auto g_task_override = std::regex(R"(override .+)");
+    static auto g_task_override = std::regex(R"(override (.+))");
     static auto g_task_embed = std::regex(R"(embed .+)");
     static auto g_task_prog = std::regex(R"(prog .+)");
 
@@ -46,9 +46,9 @@ namespace pps
 
     Task::State Task::process(std::string &line, bool isStatic)
     {
+        auto originLine = line;
         m_isStatic = isStatic;
         auto type = extractTask(line);
-        auto taskLine = line;
 
         switch (type)
         {
@@ -62,7 +62,7 @@ namespace pps
             processInclude(line);
             break;
         case Type::tOverride:
-            processOverride(line);
+            processOverride(originLine, line);
             break;
         case Type::tEmbed:
             processEmbed(line);
@@ -240,10 +240,21 @@ namespace pps
         return std::string(data->data.begin(), data->data.end());
     }
 
-    void Task::processOverride(std::string &expr)
+    void Task::processOverride(std::string &origin, std::string &expr)
     {
         if (isSkip())
             return;
+
+        auto iter = m_replace.texts.find(expr);
+        if (iter == m_replace.texts.end())
+        {
+            std::cerr << "Fail to find " << expr << " in context." << std::endl;
+            expr = "";
+            return;
+        }
+
+        static std::regex token_override_expr(R"((\w+)\s*(/\*<\$override[^>]*>\*/))");
+        expr = std::regex_replace(origin, token_override_expr, iter->second);
     }
 
     void Task::processEmbed(std::string &expr)
@@ -278,7 +289,7 @@ namespace pps
         }
         else if (std::regex_search(task, match_branch, g_task_override))
         {
-            line = match_branch[0].str();
+            line = match_branch[1].str();
             return Type::tOverride;
         }
         else if (std::regex_search(task, match_branch, g_task_embed))

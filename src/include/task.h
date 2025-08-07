@@ -96,7 +96,7 @@ namespace pps
         std::string extractIncludeFromLoader(const std::string &path);
 
         // Override
-        void processOverride(std::string &line);
+        void processOverride(std::string &origin, std::string &line);
         void extractOverrideTask(std::string &line);
 
         // Embed
