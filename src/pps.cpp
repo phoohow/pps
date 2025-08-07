@@ -38,16 +38,7 @@ namespace pps
         {
             auto state = m_task->process(line, isStatic);
 
-            switch (state)
-            {
-            case Task::State::sKeep:
-                if (output.back() == '\n')
-                    output += line;
-                else
-                    output += "\n" + line;
-            case Task::State::sSkip:
-                break;
-            }
+            output += "\n" + line;
         }
 
         return output;

@@ -53,6 +53,7 @@ namespace pps
         switch (type)
         {
         case Type::tOrigin:
+            processOrigin(line);
             break;
         case Type::tBranch:
             line = processBranch(line);
@@ -75,6 +76,12 @@ namespace pps
         return m_state;
     }
 
+    void Task::processOrigin(std::string &line)
+    {
+        if (isSkip())
+            line = "";
+    }
+
     Task::BranchState Task::evaluateBranch(std::string &line)
     {
         BranchState state;
@@ -86,7 +93,7 @@ namespace pps
         {
             Lexer lexer(line);
             auto tokens = lexer.tokenize();
-            state.hasTrue = hasBranchTrue(tokens);
+            state.keepCurrent = hasBranchTrue(tokens);
 
             Parser parser(tokens);
             auto root = parser.parse();
@@ -95,9 +102,12 @@ namespace pps
 
             state.value = std::get<bool>(value->value);
 
-            if (!m_isStatic && state.hasTrue)
+            if (!m_isStatic && state.keepCurrent)
+            {
+                state.value = true;
                 state.conditionExpr = processCondition(root.get());
-
+                state.keepElse = true;
+            }
             m_branchStack.push(state);
 
             break;
@@ -106,10 +116,12 @@ namespace pps
         {
             Lexer lexer(line);
             auto tokens = lexer.tokenize();
-            state.hasTrue = hasBranchTrue(tokens);
+            state.keepCurrent = hasBranchTrue(tokens);
 
-            auto oldHasTrue = m_branchStack.top().hasTrue;
-            if (!oldHasTrue && state.hasTrue)
+            auto oldState = m_branchStack.top();
+            state.keepElse = oldState.keepElse;
+
+            if (!oldState.keepCurrent && state.keepCurrent)
             {
                 state.type = BranchType::tIf;
             }
@@ -121,17 +133,27 @@ namespace pps
 
             state.value = std::get<bool>(value->value);
 
-            if (!m_isStatic && state.hasTrue)
+            if (!m_isStatic && state.keepCurrent)
+            {
+                state.value = true;
                 state.conditionExpr = processCondition(root.get());
+                state.keepElse = true;
+            }
 
-            m_branchStack.push(state);
+            m_branchStack.top() = state;
 
             break;
         }
         case BranchType::tElse:
         {
-            state.hasTrue = m_branchStack.top().hasTrue;
-            state.value = !m_branchStack.top().value;
+            auto oldState = m_branchStack.top();
+            state.keepElse = oldState.keepElse;
+            state.value = !oldState.value;
+            if (!m_isStatic && state.keepElse)
+            {
+                state.value = true;
+            }
+
             m_branchStack.top() = state;
             break;
         }
@@ -156,13 +178,13 @@ namespace pps
             return "";
         }
 
-        if (!state.hasTrue)
-        {
-            return "";
-        }
-
         if (state.type == BranchType::tIf)
         {
+            if (!state.keepCurrent)
+            {
+                return "";
+            }
+
             std::string ifExpr = "if(";
             ifExpr += state.conditionExpr;
             ifExpr += ")";
@@ -171,6 +193,11 @@ namespace pps
         }
         else if (state.type == BranchType::tElif)
         {
+            if (!state.keepCurrent)
+            {
+                return "";
+            }
+
             std::string elifExpr = "elif(";
             elifExpr += state.conditionExpr;
             elifExpr += ")";
@@ -179,6 +206,11 @@ namespace pps
         }
         else if (state.type == BranchType::tElse)
         {
+            if (!state.keepElse)
+            {
+                return "";
+            }
+
             return "else";
         }
         else if (state.type == BranchType::tEndif)
@@ -309,15 +341,15 @@ namespace pps
     Task::BranchType Task::extractBranchTask(std::string &line)
     {
         std::smatch match_branch;
-        if (std::regex_search(line, match_branch, g_branch_if))
+        if (std::regex_search(line, match_branch, g_branch_elif))
+        {
+            line = match_branch[1].str();
+            return BranchType::tElif;
+        }
+        else if (std::regex_search(line, match_branch, g_branch_if))
         {
             line = match_branch[1].str();
             return BranchType::tIf;
-        }
-        else if (std::regex_search(line, match_branch, g_branch_elif))
-        {
-            line = match_branch[0].str();
-            return BranchType::tElif;
         }
         else if (std::regex_search(line, match_branch, g_branch_else))
         {

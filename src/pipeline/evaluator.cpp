@@ -395,7 +395,8 @@ namespace pps
             results.push_back(evaluate(stmt.get()));
         }
 
-        return std::move(results.back());
+        return node->statements.empty() ? std::make_unique<BoolValue>(false)
+                                        : std::move(results.back());
     }
 
 }

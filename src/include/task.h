@@ -63,7 +63,8 @@ namespace pps
         {
             BranchType type = BranchType::tIf;
             bool value = false;
-            bool hasTrue = false;
+            bool keepCurrent = false;
+            bool keepElse = false;
             std::string conditionExpr;
         };
 
@@ -82,6 +83,9 @@ namespace pps
         Type extractTask(std::string &line);
         void processState();
         bool isSkip();
+
+        // Origin
+        void processOrigin(std::string &line);
 
         // Branch
         BranchState evaluateBranch(std::string &line);
