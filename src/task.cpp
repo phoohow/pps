@@ -93,6 +93,7 @@ namespace pps
         {
             state.choosed = evaluateConditionExpr(line);
             state.current = state.choosed;
+            m_staticStack.push(state);
             break;
         }
         case BranchType::tElif:
