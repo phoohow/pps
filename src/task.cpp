@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <sstream>
 
 namespace pps
 {
@@ -251,7 +252,16 @@ namespace pps
         content += extractIncludeFromCTX(path);
         content += extractIncludeFromLoader(path);
 
-        path = content;
+        std::string out;
+        std::istringstream iss(content);
+        std::string line;
+        while (std::getline(iss, line))
+        {
+            process(line, m_isStatic);
+            out += line + "\n";
+        }
+
+        path = out;
     }
 
     std::string Task::extractIncludeFromCTX(const std::string &path)
