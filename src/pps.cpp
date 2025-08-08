@@ -2,9 +2,59 @@
 #include <task.h>
 
 #include <sstream>
+#include <iostream>
 
 namespace pps
 {
+    static int countBlank(const std::string &str)
+    {
+        size_t firstNonTab = str.find_first_not_of(' ');
+        if (firstNonTab == std::string::npos)
+        {
+            return str.length();
+        }
+        return firstNonTab;
+    }
+
+    static bool startsWith(const std::string &str, const std::string &prefix)
+    {
+        return str.rfind(prefix, 0) == 0;
+    }
+
+    static bool endsWith(const std::string &str, const std::string &suffix)
+    {
+        return str.rfind(suffix) == (str.length() - suffix.length());
+    }
+
+    static void formatPPSIndent(std::string &line, int &indentLevel)
+    {
+        if (startsWith(line, "{"))
+        {
+            indentLevel++;
+        }
+        else if (startsWith(line, "}"))
+        {
+            indentLevel = std::max(0, indentLevel - 1);
+        }
+        else
+        {
+            auto currentIndent = countBlank(line);
+            if (currentIndent < indentLevel * 4)
+            {
+                line = std::string(indentLevel * 4, ' ') + line;
+            }
+        }
+    }
+
+    static void formatPPSEnter(std::string &line)
+    {
+        if (endsWith(line, "}"))
+        {
+            line += "\n";
+        }
+
+        line += "\n";
+    }
 
     PPS::PPS()
     {
@@ -34,11 +84,19 @@ namespace pps
         std::string line;
         std::string output;
 
+        int indentLevel = 0;
+
         while (std::getline(iss, line))
         {
             auto state = m_task->process(line, isStatic);
+            if (line.empty())
+                continue;
 
-            output += "\n" + line;
+            formatPPSIndent(line, indentLevel);
+
+            formatPPSEnter(line);
+
+            output += line;
         }
 
         return output;
