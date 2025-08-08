@@ -10,6 +10,28 @@
 
 namespace pps
 {
+    enum class BranchType : uint8_t
+    {
+        tIf,
+        tElif,
+        tElse,
+        tEndif,
+    };
+
+    struct StaticState
+    {
+        BranchType type = BranchType::tIf;
+        bool choosed = false;
+        bool current = false;
+    };
+
+    struct DynamicState
+    {
+        BranchType type = BranchType::tIf;
+        bool choosed = false;
+        bool current = false;
+        std::string conditionExpr;
+    };
 
     class Task
     {
@@ -51,24 +73,8 @@ namespace pps
 
         // Branch
     private:
-        enum class BranchType : uint8_t
-        {
-            tIf,
-            tElif,
-            tElse,
-            tEndif,
-        };
-
-        struct BranchState
-        {
-            BranchType type = BranchType::tIf;
-            bool value = false;
-            bool keepCurrent = false;
-            bool keepElse = false;
-            std::string conditionExpr;
-        };
-
-        std::stack<BranchState> m_branchStack;
+        std::stack<StaticState> m_staticStack;
+        std::stack<DynamicState> m_dynamicStack;
 
         // Prog
     private:
@@ -88,11 +94,15 @@ namespace pps
         void processOrigin(std::string &line);
 
         // Branch
-        BranchState evaluateBranch(std::string &line);
+        BranchType extractBranchType(std::string &line);
+        StaticState evaluateStaticBranch(std::string &line);
+        DynamicState evaluateDynamicBranch(std::string &line);
         std::string processBranch(std::string &line);
-        BranchType extractBranchTask(std::string &line);
+        std::string processStaticBranch(std::string &line);
+        std::string processDynamicBranch(std::string &line);
         bool hasBranchTrue(const std::vector<Token> &tokens);
-        std::string processCondition(const Node *node);
+        bool evaluateConditionExpr(const std::string &expr);
+        std::string generateConditionExpr(const Node *node);
 
         // Include
         void processInclude(std::string &line);

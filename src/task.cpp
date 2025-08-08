@@ -82,10 +82,57 @@ namespace pps
             line = "";
     }
 
-    Task::BranchState Task::evaluateBranch(std::string &line)
+    StaticState Task::evaluateStaticBranch(std::string &line)
     {
-        BranchState state;
-        state.type = extractBranchTask(line);
+        StaticState state;
+        state.type = extractBranchType(line);
+
+        switch (state.type)
+        {
+        case BranchType::tIf:
+        {
+            state.choosed = evaluateConditionExpr(line);
+            state.current = state.choosed;
+            break;
+        }
+        case BranchType::tElif:
+        {
+            auto oldState = m_staticStack.top();
+            if (oldState.choosed)
+            {
+                state.choosed = true;
+                state.current = false;
+            }
+            else
+            {
+                state.choosed = evaluateConditionExpr(line);
+                state.current = state.choosed;
+            }
+
+            m_staticStack.top() = state;
+            break;
+        }
+        case BranchType::tElse:
+        {
+            auto oldState = m_staticStack.top();
+            state.current = !oldState.choosed;
+
+            m_staticStack.top() = state;
+            break;
+        }
+        case BranchType::tEndif:
+        {
+            m_staticStack.pop();
+            break;
+        }
+        }
+        return state;
+    }
+
+    DynamicState Task::evaluateDynamicBranch(std::string &line)
+    {
+        DynamicState state;
+        state.type = extractBranchType(line);
 
         switch (state.type)
         {
@@ -93,73 +140,52 @@ namespace pps
         {
             Lexer lexer(line);
             auto tokens = lexer.tokenize();
-            state.keepCurrent = hasBranchTrue(tokens);
+            state.choosed = hasBranchTrue(tokens);
+            state.current = state.choosed;
 
-            Parser parser(tokens);
-            auto root = parser.parse();
-            Evaluator evaluator(&m_condition);
-            auto value = evaluator.evaluate(root.get());
-
-            state.value = std::get<bool>(value->value);
-
-            if (!m_isStatic && state.keepCurrent)
+            if (state.current)
             {
-                state.value = true;
-                state.conditionExpr = processCondition(root.get());
-                state.keepElse = true;
+                Parser parser(tokens);
+                auto root = parser.parse();
+                state.conditionExpr = generateConditionExpr(root.get());
             }
-            m_branchStack.push(state);
 
+            m_dynamicStack.push(state);
             break;
         }
         case BranchType::tElif:
         {
+            auto oldState = m_dynamicStack.top();
+            if (!oldState.choosed)
+                state.type = BranchType::tIf;
+
             Lexer lexer(line);
             auto tokens = lexer.tokenize();
-            state.keepCurrent = hasBranchTrue(tokens);
 
-            auto oldState = m_branchStack.top();
-            state.keepElse = oldState.keepElse;
+            state.current = hasBranchTrue(tokens);
+            state.choosed = oldState.choosed ? true : state.current;
 
-            if (!oldState.keepCurrent && state.keepCurrent)
+            if (state.current)
             {
-                state.type = BranchType::tIf;
+                Parser parser(tokens);
+                auto root = parser.parse();
+                state.conditionExpr = generateConditionExpr(root.get());
             }
 
-            Parser parser(tokens);
-            auto root = parser.parse();
-            Evaluator evaluator(&m_condition);
-            auto value = evaluator.evaluate(root.get());
-
-            state.value = std::get<bool>(value->value);
-
-            if (!m_isStatic && state.keepCurrent)
-            {
-                state.value = true;
-                state.conditionExpr = processCondition(root.get());
-                state.keepElse = true;
-            }
-
-            m_branchStack.top() = state;
-
+            m_dynamicStack.top() = state;
             break;
         }
         case BranchType::tElse:
         {
-            auto oldState = m_branchStack.top();
-            state.keepElse = oldState.keepElse;
-            state.value = !oldState.value;
-            if (!m_isStatic && state.keepElse)
-            {
-                state.value = true;
-            }
+            auto oldState = m_dynamicStack.top();
+            state.current = oldState.choosed;
 
-            m_branchStack.top() = state;
+            m_dynamicStack.top() = state;
             break;
         }
         case BranchType::tEndif:
         {
-            m_branchStack.pop();
+            m_dynamicStack.pop();
             break;
         }
         default:
@@ -169,56 +195,50 @@ namespace pps
         return state;
     }
 
+    std::string Task::processStaticBranch(std::string &line)
+    {
+        evaluateStaticBranch(line);
+        return "";
+    }
+
+    std::string Task::processDynamicBranch(std::string &line)
+    {
+        auto state = evaluateDynamicBranch(line);
+        if (!state.current)
+            return "";
+
+        std::string expr;
+        switch (state.type)
+        {
+        case BranchType::tIf:
+        {
+            expr += "if(" + state.conditionExpr + ")";
+            break;
+        }
+        case BranchType::tElif:
+        {
+            expr += "elif(" + state.conditionExpr + ")";
+            break;
+        }
+        case BranchType::tElse:
+        {
+            expr += "else";
+            break;
+        }
+        case BranchType::tEndif:
+        default:
+            break;
+        }
+
+        return expr;
+    }
+
     std::string Task::processBranch(std::string &line)
     {
-        auto state = evaluateBranch(line);
-
-        if (m_isStatic || m_branchStack.empty())
-        {
-            return "";
-        }
-
-        if (state.type == BranchType::tIf)
-        {
-            if (!state.keepCurrent)
-            {
-                return "";
-            }
-
-            std::string ifExpr = "if(";
-            ifExpr += state.conditionExpr;
-            ifExpr += ")";
-
-            return ifExpr;
-        }
-        else if (state.type == BranchType::tElif)
-        {
-            if (!state.keepCurrent)
-            {
-                return "";
-            }
-
-            std::string elifExpr = "elif(";
-            elifExpr += state.conditionExpr;
-            elifExpr += ")";
-
-            return elifExpr;
-        }
-        else if (state.type == BranchType::tElse)
-        {
-            if (!state.keepElse)
-            {
-                return "";
-            }
-
-            return "else";
-        }
-        else if (state.type == BranchType::tEndif)
-        {
-            return "";
-        }
-
-        return "";
+        if (m_isStatic)
+            return processStaticBranch(line);
+        else
+            return processDynamicBranch(line);
     }
 
     void Task::processInclude(std::string &path)
@@ -338,7 +358,7 @@ namespace pps
         return Type::tOrigin;
     }
 
-    Task::BranchType Task::extractBranchTask(std::string &line)
+    BranchType Task::extractBranchType(std::string &line)
     {
         std::smatch match_branch;
         if (std::regex_search(line, match_branch, g_branch_elif))
@@ -381,7 +401,20 @@ namespace pps
         return false;
     }
 
-    std::string Task::processCondition(const Node *node)
+    bool Task::evaluateConditionExpr(const std::string &expr)
+    {
+        Lexer lexer(expr);
+        auto tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        auto root = parser.parse();
+        Evaluator evaluator(&m_condition);
+        auto value = evaluator.evaluate(root.get());
+
+        return std::get<bool>(value->value);
+    }
+
+    std::string Task::generateConditionExpr(const Node *node)
     {
         ExprSimplifier simplifier(m_condition.bools);
         auto simplifiedNode = simplifier.simplify(node);
@@ -399,13 +432,17 @@ namespace pps
 
     void Task::processState()
     {
-        if (m_branchStack.empty() || m_branchStack.top().value)
+        if (m_isStatic)
         {
-            m_state = State::sKeep;
+            m_state = m_staticStack.empty() || m_staticStack.top().current
+                          ? State::sKeep
+                          : State::sSkip;
         }
         else
         {
-            m_state = State::sSkip;
+            m_state = m_dynamicStack.empty() || m_dynamicStack.top().current
+                          ? State::sKeep
+                          : State::sSkip;
         }
     }
 
