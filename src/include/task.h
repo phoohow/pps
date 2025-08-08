@@ -21,14 +21,14 @@ namespace pps
     struct StaticState
     {
         BranchType type = BranchType::tIf;
-        bool choosed = false;
+        bool choosedIf = false;
         bool current = false;
     };
 
     struct DynamicState
     {
         BranchType type = BranchType::tIf;
-        bool choosed = false;
+        bool enableElse = false;
         bool current = false;
         std::string conditionExpr;
     };
@@ -95,7 +95,7 @@ namespace pps
 
         // Branch
         BranchType extractBranchType(std::string &line);
-        StaticState evaluateStaticBranch(std::string &line);
+        void evaluateStaticBranch(std::string &line);
         DynamicState evaluateDynamicBranch(std::string &line);
         std::string processBranch(std::string &line);
         std::string processStaticBranch(std::string &line);

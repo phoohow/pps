@@ -83,7 +83,7 @@ namespace pps
             line = "";
     }
 
-    StaticState Task::evaluateStaticBranch(std::string &line)
+    void Task::evaluateStaticBranch(std::string &line)
     {
         StaticState state;
         state.type = extractBranchType(line);
@@ -92,34 +92,61 @@ namespace pps
         {
         case BranchType::tIf:
         {
-            state.choosed = evaluateConditionExpr(line);
-            state.current = state.choosed;
+            // parent is false, then skip
+            if (!m_staticStack.empty() && !m_staticStack.top().current)
+            {
+                state.current = false;
+                m_staticStack.push(state);
+                break;
+            }
+
+            state.current = evaluateConditionExpr(line);
+            state.choosedIf = state.current;
             m_staticStack.push(state);
             break;
         }
         case BranchType::tElif:
         {
-            auto oldState = m_staticStack.top();
-            if (oldState.choosed)
+            auto brother = m_staticStack.top();
+            m_staticStack.pop();
+
+            // parent is false, then skip
+            if (!m_staticStack.empty() && !m_staticStack.top().current)
             {
-                state.choosed = true;
+                state.current = false;
+                m_staticStack.push(state);
+                break;
+            }
+
+            if (brother.choosedIf)
+            {
+                state.choosedIf = true;
                 state.current = false;
             }
             else
             {
-                state.choosed = evaluateConditionExpr(line);
-                state.current = state.choosed;
+                state.current = evaluateConditionExpr(line);
+                state.choosedIf = state.current;
             }
 
-            m_staticStack.top() = state;
+            m_staticStack.push(state);
             break;
         }
         case BranchType::tElse:
         {
-            auto oldState = m_staticStack.top();
-            state.current = !oldState.choosed;
+            auto brother = m_staticStack.top();
+            m_staticStack.pop();
 
-            m_staticStack.top() = state;
+            // parent is false, then skip
+            if (!m_staticStack.empty() && !m_staticStack.top().current)
+            {
+                state.current = false;
+                m_staticStack.push(state);
+                break;
+            }
+
+            state.current = !brother.choosedIf;
+            m_staticStack.push(state);
             break;
         }
         case BranchType::tEndif:
@@ -128,7 +155,6 @@ namespace pps
             break;
         }
         }
-        return state;
     }
 
     DynamicState Task::evaluateDynamicBranch(std::string &line)
@@ -140,10 +166,18 @@ namespace pps
         {
         case BranchType::tIf:
         {
+            // parent is false, then skip
+            if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
+            {
+                state.current = false;
+                m_dynamicStack.push(state);
+                break;
+            }
+
             Lexer lexer(line);
             auto tokens = lexer.tokenize();
-            state.choosed = hasBranchTrue(tokens);
-            state.current = state.choosed;
+            state.current = hasBranchTrue(tokens);
+            state.enableElse = state.current;
 
             if (state.current)
             {
@@ -157,15 +191,24 @@ namespace pps
         }
         case BranchType::tElif:
         {
-            auto oldState = m_dynamicStack.top();
-            if (!oldState.choosed)
+            auto brother = m_dynamicStack.top();
+            m_dynamicStack.pop();
+            // parent is false, then skip
+            if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
+            {
+                state.current = false;
+                m_dynamicStack.push(state);
+                break;
+            }
+
+            if (!brother.current)
                 state.type = BranchType::tIf;
 
             Lexer lexer(line);
             auto tokens = lexer.tokenize();
 
             state.current = hasBranchTrue(tokens);
-            state.choosed = oldState.choosed ? true : state.current;
+            state.enableElse = brother.enableElse ? true : state.current;
 
             if (state.current)
             {
@@ -174,15 +217,23 @@ namespace pps
                 state.conditionExpr = generateConditionExpr(root.get());
             }
 
-            m_dynamicStack.top() = state;
+            m_dynamicStack.push(state);
             break;
         }
         case BranchType::tElse:
         {
-            auto oldState = m_dynamicStack.top();
-            state.current = oldState.choosed;
+            auto brother = m_dynamicStack.top();
+            m_dynamicStack.pop();
+            // parent is false, then skip
+            if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
+            {
+                state.current = false;
+                m_dynamicStack.push(state);
+                break;
+            }
 
-            m_dynamicStack.top() = state;
+            state.current = brother.enableElse;
+            m_dynamicStack.push(state);
             break;
         }
         case BranchType::tEndif:
@@ -258,7 +309,13 @@ namespace pps
         while (std::getline(iss, line))
         {
             process(line, m_isStatic);
-            out += line + "\n";
+
+            if (line.empty())
+                continue;
+            else if (line.back() != '\n')
+                line += "\n";
+
+            out += line;
         }
 
         path = out;
