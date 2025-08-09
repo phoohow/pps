@@ -56,6 +56,48 @@ namespace pps
         line += "\n";
     }
 
+    static void limitConsecutiveNewlines(std::string &str, int maxConsecutive = 2)
+    {
+        if (str.empty() || maxConsecutive < 0)
+            return;
+
+        auto isWindowsNewline = [&](size_t pos)
+        { return pos + 1 < str.length() && str[pos] == '\r' && str[pos + 1] == '\n'; };
+
+        auto isAnyNewline = [&](size_t pos)
+        { return str[pos] == '\n' || str[pos] == '\r'; };
+
+        size_t writePos = 0;
+        int newlineCount = 0;
+        for (size_t i = 0; i < str.length(); ++i)
+        {
+            if (isWindowsNewline(i))
+            {
+                newlineCount++;
+                if (newlineCount <= maxConsecutive)
+                {
+                    str[writePos++] = '\n';
+                }
+                ++i;
+            }
+            else if (isAnyNewline(i))
+            {
+                newlineCount++;
+                if (newlineCount <= maxConsecutive)
+                {
+                    str[writePos++] = '\n';
+                }
+            }
+            else
+            {
+                str[writePos++] = str[i];
+                newlineCount = 0;
+            }
+        }
+
+        str.resize(writePos);
+    }
+
     PPS::PPS()
     {
         m_task = new Task();
@@ -94,10 +136,10 @@ namespace pps
 
             formatPPSIndent(line, indentLevel);
 
-            formatPPSEnter(line);
-
             output += line;
         }
+
+        limitConsecutiveNewlines(output);
 
         return output;
     }
