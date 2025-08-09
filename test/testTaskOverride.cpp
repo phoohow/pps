@@ -20,8 +20,8 @@ int main()
         {"@sLinearClamp", "s20"},
     };
 
-    pps::PPS lang;
-    std::string line = R"(
+    pps::PPS    lang;
+    std::string line   = R"(
 SamplerState s_LinearWrap : register(s0 /*<$override @sLinearWrap>*/);
 SamplerState s_LinearClamp : register(s1 /*<$override @sLinearClamp>*/);
 
@@ -40,7 +40,7 @@ SamplerState s_LinearClamp : register(s1 /*<$override @sLinearClamp>*/);
 }
 /*<$branch endif>*/
 )";
-    auto result = lang.process(line, conditions, replace, pps::IncludeCTX(), false);
+    auto        result = lang.process(line, conditions, replace, pps::IncludeCTX(), false);
 
     std::cout << "pps result:\n"
               << result << std::endl;

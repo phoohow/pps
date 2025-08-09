@@ -23,8 +23,8 @@ int main()
         std::string(SOURCE_DIR) + "/include/",
     };
 
-    pps::PPS lang;
-    std::string line = R"(
+    pps::PPS    lang;
+    std::string line   = R"(
 /*<$include pps/pps.h>*/
 
 /*<$branch if @useBaseColorMap>*/
@@ -42,7 +42,7 @@ int main()
 }
 /*<$branch endif>*/
 )";
-    auto result = lang.process(line, conditions, replace, include, false);
+    auto        result = lang.process(line, conditions, replace, include, false);
 
     std::cout << "pps result:\n"
               << result << std::endl;

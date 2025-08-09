@@ -8,38 +8,38 @@
 namespace pps
 {
 
-    Token::Token()
-        : type(TokenType::tEnter), value("") {}
+Token::Token() :
+    type(TokenType::tEnter), value("") {}
 
-    Token::Token(TokenType _type, const std::string &_value)
-        : type(_type), value(_value) {}
+Token::Token(TokenType _type, const std::string& _value) :
+    type(_type), value(_value) {}
 
-    void Token::print() const
+void Token::print() const
+{
+    std::cout << "Token Type: " << magic_enum::enum_name(type)
+              << ", Value: " << value << "\n";
+}
+
+Lexer::Lexer(const std::string& input) :
+    m_source(input), m_pos(0), m_currentChar(input[m_pos]) {}
+
+std::vector<Token> Lexer::tokenize()
+{
+    std::vector<Token> tokens;
+    while (m_currentChar != '\0')
     {
-        std::cout << "Token Type: " << magic_enum::enum_name(type)
-                  << ", Value: " << value << "\n";
+        tokens.push_back(next());
     }
 
-    Lexer::Lexer(const std::string &input)
-        : m_source(input), m_pos(0), m_currentChar(input[m_pos]) {}
+    return std::move(tokens);
+}
 
-    std::vector<Token> Lexer::tokenize()
+Token Lexer::next()
+{
+    while (m_currentChar != '\0')
     {
-        std::vector<Token> tokens;
-        while (m_currentChar != '\0')
+        switch (m_currentChar)
         {
-            tokens.push_back(next());
-        }
-
-        return std::move(tokens);
-    }
-
-    Token Lexer::next()
-    {
-        while (m_currentChar != '\0')
-        {
-            switch (m_currentChar)
-            {
             case ' ':
             case '\t':
             {
@@ -226,6 +226,7 @@ namespace pps
                     advance(5);
                     return Token(TokenType::tCondition_endif, "endif");
                 }
+            }
             case 'i':
                 if (match("if "))
                 {
@@ -259,97 +260,97 @@ namespace pps
             default:
             {
             }
-            }
-            }
-
-            return Token(TokenType::tError, std::string(1, m_currentChar));
         }
-        return Token(TokenType::tEOF, "");
+        return Token(TokenType::tError, std::string(1, m_currentChar));
     }
 
-    void Lexer::skipSpace()
-    {
-        while (m_currentChar != '\0' && std::isspace(m_currentChar) && m_currentChar != '\n')
-        {
-            advance();
-        }
-    }
+    return Token(TokenType::tEOF, "");
+}
 
-    Token Lexer::variable()
+
+void Lexer::skipSpace()
+{
+    while (m_currentChar != '\0' && std::isspace(m_currentChar) && m_currentChar != '\n')
     {
-        std::string result;
+        advance();
+    }
+}
+
+Token Lexer::variable()
+{
+    std::string result;
+    result += m_currentChar;
+    advance();
+    while (m_currentChar != '\0' && (std::isalnum(m_currentChar) || m_currentChar == '_'))
+    {
         result += m_currentChar;
         advance();
-        while (m_currentChar != '\0' && (std::isalnum(m_currentChar) || m_currentChar == '_'))
-        {
-            result += m_currentChar;
-            advance();
-        }
-        return Token(TokenType::tVariable, result);
     }
+    return Token(TokenType::tVariable, result);
+}
 
-    Token Lexer::literal_int()
+Token Lexer::literal_int()
+{
+    std::string result;
+    bool        hasDecimal = false;
+
+    while (m_currentChar != '\0' && (std::isdigit(m_currentChar) || m_currentChar == '.'))
     {
-        std::string result;
-        bool hasDecimal = false;
-
-        while (m_currentChar != '\0' && (std::isdigit(m_currentChar) || m_currentChar == '.'))
+        if (m_currentChar == '.')
         {
-            if (m_currentChar == '.')
-            {
-                if (hasDecimal)
-                    throw std::runtime_error("Invalid number: multiple decimal points");
-                hasDecimal = true;
-            }
-            result += m_currentChar;
-            advance();
+            if (hasDecimal)
+                throw std::runtime_error("Invalid number: multiple decimal points");
+            hasDecimal = true;
         }
-
-        return Token(TokenType::tLit_int, result);
-    }
-
-    Token Lexer::literal_string()
-    {
+        result += m_currentChar;
         advance();
-        std::string result;
-        while (m_currentChar != '\0' && m_currentChar != '"')
-        {
-            result += m_currentChar;
-            advance();
-        }
-        if (m_currentChar != '"')
-            throw std::runtime_error("Unterminated string literal");
+    }
+
+    return Token(TokenType::tLit_int, result);
+}
+
+Token Lexer::literal_string()
+{
+    advance();
+    std::string result;
+    while (m_currentChar != '\0' && m_currentChar != '"')
+    {
+        result += m_currentChar;
         advance();
-        return Token(TokenType::tLit_string, result);
     }
+    if (m_currentChar != '"')
+        throw std::runtime_error("Unterminated string literal");
+    advance();
+    return Token(TokenType::tLit_string, result);
+}
 
-    char Lexer::peek(int n) const
-    {
-        if (m_pos + n >= m_source.length())
-            return '\0';
-        return m_source[m_pos + n];
-    }
+char Lexer::peek(int n) const
+{
+    if (m_pos + n >= m_source.length())
+        return '\0';
+    return m_source[m_pos + n];
+}
 
-    void Lexer::advance(int n)
-    {
-        m_pos += n;
-        if (m_pos < m_source.length())
-            m_currentChar = m_source[m_pos];
-        else
-            m_currentChar = '\0';
-    }
+void Lexer::advance(int n)
+{
+    m_pos += n;
+    if (m_pos < m_source.length())
+        m_currentChar = m_source[m_pos];
+    else
+        m_currentChar = '\0';
+}
 
-    bool Lexer::match(const std::string &pattern)
+bool Lexer::match(const std::string& pattern)
+{
+    if (m_pos + pattern.length() > m_source.length())
+        return false;
+
+    for (size_t i = 0; i < pattern.length(); ++i)
     {
-        if (m_pos + pattern.length() > m_source.length())
+        if (m_source[m_pos + i] != pattern[i])
             return false;
-
-        for (size_t i = 0; i < pattern.length(); ++i)
-        {
-            if (m_source[m_pos + i] != pattern[i])
-                return false;
-        }
-        return true;
     }
+    return true;
+}
 
 } // namespace pps

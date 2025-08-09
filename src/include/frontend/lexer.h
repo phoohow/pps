@@ -6,106 +6,106 @@
 namespace pps
 {
 
-    enum class TokenType
-    {
-        tType_int,
-        tType_bool,
-        tType_string,
+enum class TokenType
+{
+    tType_int,
+    tType_bool,
+    tType_string,
 
-        tOp_assign,
+    tOp_assign,
 
-        // logic
-        tOp_or,
-        tOp_and,
+    // logic
+    tOp_or,
+    tOp_and,
 
-        // bit
-        tOp_bitOr,
-        tOp_bitXor,
-        tOp_bitAnd,
+    // bit
+    tOp_bitOr,
+    tOp_bitXor,
+    tOp_bitAnd,
 
-        // equality
-        tOp_equal,
-        tOp_unequal,
+    // equality
+    tOp_equal,
+    tOp_unequal,
 
-        // relation
-        tOp_greater,
-        tOp_less,
-        tOp_greaterEqual,
-        tOp_lessEqual,
+    // relation
+    tOp_greater,
+    tOp_less,
+    tOp_greaterEqual,
+    tOp_lessEqual,
 
-        // shift
-        tOp_bitLMove,
-        tOp_bitRMove,
+    // shift
+    tOp_bitLMove,
+    tOp_bitRMove,
 
-        // additive
-        tOp_add,
-        tOp_sub,
+    // additive
+    tOp_add,
+    tOp_sub,
 
-        // multiplicative
-        tOp_mul,
-        tOp_div,
-        tOp_mod,
+    // multiplicative
+    tOp_mul,
+    tOp_div,
+    tOp_mod,
 
-        // unary
-        tOp_not,
-        tOp_bitNot,
+    // unary
+    tOp_not,
+    tOp_bitNot,
 
-        // parenthesis
-        tOp_Lparen,
-        tOp_Rparen,
+    // parenthesis
+    tOp_Lparen,
+    tOp_Rparen,
 
-        tVariable,
+    tVariable,
 
-        tLit_int,
-        tLit_bool,
-        tLit_string,
+    tLit_int,
+    tLit_bool,
+    tLit_string,
 
-        tCondition_if,
-        tCondition_elif,
-        tCondition_else,
-        tCondition_endif,
+    tCondition_if,
+    tCondition_elif,
+    tCondition_else,
+    tCondition_endif,
 
-        tEnter,
-        tEOF,
-        tError,
-    };
+    tEnter,
+    tEOF,
+    tError,
+};
 
-    class Token
-    {
-    public:
-        TokenType type;
+class Token
+{
+public:
+    TokenType type;
 
-        std::string value;
+    std::string value;
 
-        Token();
+    Token();
 
-        Token(TokenType type, const std::string &value);
+    Token(TokenType type, const std::string& value);
 
-        void print() const;
-    };
+    void print() const;
+};
 
-    class Lexer
-    {
-        std::string m_source;
+class Lexer
+{
+    std::string m_source;
 
-        size_t m_pos;
-        char m_currentChar;
+    size_t m_pos;
+    char   m_currentChar;
 
-    public:
-        explicit Lexer(const std::string &input);
+public:
+    explicit Lexer(const std::string& input);
 
-        std::vector<Token> tokenize();
+    std::vector<Token> tokenize();
 
-    private:
-        Token next();
-        void skipSpace();
-        char peek(int n = 1) const;
-        void advance(int n = 1);
-        bool match(const std::string &pattern);
+private:
+    Token next();
+    void  skipSpace();
+    char  peek(int n = 1) const;
+    void  advance(int n = 1);
+    bool  match(const std::string& pattern);
 
-        Token literal_int();
-        Token literal_string();
-        Token variable();
-    };
+    Token literal_int();
+    Token literal_string();
+    Token variable();
+};
 
 } // namespace pps

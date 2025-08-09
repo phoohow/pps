@@ -37,13 +37,13 @@ void showUsage()
               << "  --output <path>   Specify output file" << std::endl;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    Mode mode = Mode::Codegen;
+    Mode mode     = Mode::Codegen;
     bool isStatic = true;
 
     // Contexts for PPS processing
-    pps::DefineCTX defineCtx;
+    pps::DefineCTX  defineCtx;
     pps::ReplaceCTX replaceCtx;
     pps::IncludeCTX includeCtx;
 
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
             size_t pos = dbOption.find('=');
             if (pos != std::string::npos)
             {
-                std::string key = dbOption.substr(0, pos);
+                std::string key   = dbOption.substr(0, pos);
                 std::string value = dbOption.substr(pos + 1);
                 // Parse as boolean
                 if (value == "true" || value == "false")
@@ -104,12 +104,12 @@ int main(int argc, char *argv[])
             size_t pos = diOption.find('=');
             if (pos != std::string::npos)
             {
-                std::string key = diOption.substr(0, pos);
+                std::string key   = diOption.substr(0, pos);
                 std::string value = diOption.substr(pos + 1);
                 // Try to parse as integer
                 try
                 {
-                    int intValue = std::stoi(value);
+                    int intValue        = std::stoi(value);
                     defineCtx.ints[key] = intValue;
                 }
                 catch (...)
@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
             size_t pos = dsOption.find('=');
             if (pos != std::string::npos)
             {
-                std::string key = dsOption.substr(0, pos);
-                std::string value = dsOption.substr(pos + 1);
+                std::string key        = dsOption.substr(0, pos);
+                std::string value      = dsOption.substr(pos + 1);
                 defineCtx.strings[key] = value;
             }
         }
@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
             size_t pos = rOption.find('=');
             if (pos != std::string::npos)
             {
-                std::string key = rOption.substr(0, pos);
-                std::string value = rOption.substr(pos + 1);
+                std::string key       = rOption.substr(0, pos);
+                std::string value     = rOption.substr(pos + 1);
                 replaceCtx.texts[key] = value;
             }
         }
@@ -191,51 +191,51 @@ int main(int argc, char *argv[])
 
     switch (mode)
     {
-    case Mode::Help:
-        showUsage();
-        return 0;
-    // (TODO:)Evaluation task prog; need do grammar check
-    case Mode::Evaluate:
+        case Mode::Help:
+            showUsage();
+            return 0;
+        // (TODO:)Evaluation task prog; need do grammar check
+        case Mode::Evaluate:
 
-    case Mode::Codegen:
-    default:
-    {
-        // Process based on task
-        pps::PPS processor;
-        std::string result;
+        case Mode::Codegen:
+        default:
+        {
+            // Process based on task
+            pps::PPS    processor;
+            std::string result;
 
-        if (mode == Mode::Codegen)
-        {
-            // Code generation task
-            result = processor.process(sourceCode, defineCtx, replaceCtx, includeCtx, isStatic);
-        }
-        else if (mode == Mode::Evaluate)
-        {
-            // Evaluation task
-            // For now, we'll just process the source code as with codegen
-            // but this could be extended to do specific evaluation tasks
-            result = processor.process(sourceCode, defineCtx, replaceCtx, includeCtx, isStatic);
-        }
-
-        // Output result to file or stdout
-        if (!outputPath.empty())
-        {
-            std::ofstream outFile(outputPath);
-            if (!outFile.is_open())
+            if (mode == Mode::Codegen)
             {
-                std::cerr << "Error: Could not open output file " << outputPath << std::endl;
-                return 1;
+                // Code generation task
+                result = processor.process(sourceCode, defineCtx, replaceCtx, includeCtx, isStatic);
             }
-            outFile << result;
-            outFile.close();
-        }
-        else
-        {
-            // Output result to stdout
-            std::cout << result << std::endl;
-        }
+            else if (mode == Mode::Evaluate)
+            {
+                // Evaluation task
+                // For now, we'll just process the source code as with codegen
+                // but this could be extended to do specific evaluation tasks
+                result = processor.process(sourceCode, defineCtx, replaceCtx, includeCtx, isStatic);
+            }
 
-        return 0;
-    }
+            // Output result to file or stdout
+            if (!outputPath.empty())
+            {
+                std::ofstream outFile(outputPath);
+                if (!outFile.is_open())
+                {
+                    std::cerr << "Error: Could not open output file " << outputPath << std::endl;
+                    return 1;
+                }
+                outFile << result;
+                outFile.close();
+            }
+            else
+            {
+                // Output result to stdout
+                std::cout << result << std::endl;
+            }
+
+            return 0;
+        }
     }
 }

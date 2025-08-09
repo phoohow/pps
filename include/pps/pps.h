@@ -16,7 +16,7 @@
 
 namespace sbin
 {
-    class Loader;
+class Loader;
 }
 
 namespace pps
@@ -49,12 +49,12 @@ public:
 
     ~PPS();
 
-    std::string process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, const IncludeCTX &include, bool isStatic = true);
+    std::string process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, const IncludeCTX& include, bool isStatic = true);
 
-    std::string process(const std::string &source, const DefineCTX &define, const ReplaceCTX &replace, sbin::Loader *moduleLoader, const std::string &decryptionKey, bool isStatic = true);
+    std::string process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, sbin::Loader* moduleLoader, const std::string& decryptionKey, bool isStatic = true);
 
 private:
-    std::string process(const std::string &source, bool isStatic);
+    std::string process(const std::string& source, bool isStatic);
 };
 
 } // namespace pps

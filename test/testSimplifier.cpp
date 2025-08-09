@@ -14,15 +14,15 @@ int main()
     };
 
     pps::Lexer lexer(input);
-    auto tokens = lexer.tokenize();
+    auto       tokens = lexer.tokenize();
 
     pps::Parser parser(tokens);
-    auto expr = parser.parse();
+    auto        expr = parser.parse();
     std::cout << "Original Parser:" << std::endl;
     expr->print();
 
     pps::ExprSimplifier simplifier(variables);
-    auto simplifiedExpr = simplifier.simplify(expr.get());
+    auto                simplifiedExpr = simplifier.simplify(expr.get());
 
     std::cout << "\nSimplified Parser:" << std::endl;
     if (simplifiedExpr)

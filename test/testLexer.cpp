@@ -26,10 +26,10 @@ const std::vector<TestCase> testCases = {
 int main()
 {
     int passed = 0;
-    for (const auto &test : testCases)
+    for (const auto& test : testCases)
     {
         pps::Lexer lexer(test.input);
-        auto tokens = lexer.tokenize();
+        auto       tokens = lexer.tokenize();
 
         if (!tokens.empty())
         {

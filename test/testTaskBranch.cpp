@@ -18,8 +18,8 @@ int main()
         {"@useShadow", "scene.useShadow"},
     };
 
-    pps::PPS lang;
-    std::string line = R"(
+    pps::PPS    lang;
+    std::string line   = R"(
 /*<$branch if @useBaseColorMap>*/
 {
     float4 value = baseColorMap(...);
@@ -35,7 +35,7 @@ int main()
 }
 /*<$branch endif>*/
 )";
-    auto result = lang.process(line, conditions, replace, pps::IncludeCTX(), false);
+    auto        result = lang.process(line, conditions, replace, pps::IncludeCTX(), false);
 
     std::cout << "pps result:\n"
               << result << std::endl;

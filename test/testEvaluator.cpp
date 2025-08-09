@@ -55,16 +55,16 @@ const std::vector<TestCase> testCases = {
 int main()
 {
     int passed = 0;
-    for (const auto &test : testCases)
+    for (const auto& test : testCases)
     {
         pps::Lexer lexer(test.input);
-        auto tokens = lexer.tokenize();
+        auto       tokens = lexer.tokenize();
 
         pps::Parser parser(tokens);
-        auto root = parser.parse();
+        auto        root = parser.parse();
 
         pps::Evaluator evaluator;
-        auto result = evaluator.evaluate(root.get());
+        auto           result = evaluator.evaluate(root.get());
 
         if (result)
         {

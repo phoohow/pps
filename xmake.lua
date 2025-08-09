@@ -33,7 +33,7 @@ function add_test_target(name, need_pps, files)
         set_kind("binary")
         add_includedirs("include")
         add_includedirs("src/include")
-
+        
         if need_pps then
             add_deps("libpps")
         end
