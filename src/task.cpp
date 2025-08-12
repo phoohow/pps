@@ -83,11 +83,11 @@ void Task::processOrigin(std::string& line)
 void Task::evaluateStaticBranch(std::string& line)
 {
     StaticState state;
-    state.type = extractBranchType(line);
+    state.type = extractBranchTag(line);
 
     switch (state.type)
     {
-        case BranchType::tIf:
+        case BranchTag::tIf:
         {
             // parent is false, then skip
             if (!m_staticStack.empty() && !m_staticStack.top().current)
@@ -102,7 +102,7 @@ void Task::evaluateStaticBranch(std::string& line)
             m_staticStack.push(state);
             break;
         }
-        case BranchType::tElif:
+        case BranchTag::tElif:
         {
             auto brother = m_staticStack.top();
             m_staticStack.pop();
@@ -129,7 +129,7 @@ void Task::evaluateStaticBranch(std::string& line)
             m_staticStack.push(state);
             break;
         }
-        case BranchType::tElse:
+        case BranchTag::tElse:
         {
             auto brother = m_staticStack.top();
             m_staticStack.pop();
@@ -146,7 +146,7 @@ void Task::evaluateStaticBranch(std::string& line)
             m_staticStack.push(state);
             break;
         }
-        case BranchType::tEndif:
+        case BranchTag::tEndif:
         {
             m_staticStack.pop();
             break;
@@ -157,11 +157,11 @@ void Task::evaluateStaticBranch(std::string& line)
 DynamicState Task::evaluateDynamicBranch(std::string& line)
 {
     DynamicState state;
-    state.type = extractBranchType(line);
+    state.type = extractBranchTag(line);
 
     switch (state.type)
     {
-        case BranchType::tIf:
+        case BranchTag::tIf:
         {
             // parent is false, then skip
             if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
@@ -186,7 +186,7 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
             m_dynamicStack.push(state);
             break;
         }
-        case BranchType::tElif:
+        case BranchTag::tElif:
         {
             auto brother = m_dynamicStack.top();
             m_dynamicStack.pop();
@@ -198,14 +198,14 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
                 break;
             }
 
-            if (!brother.current)
-                state.type = BranchType::tIf;
+            if (!brother.enableElse)
+                state.type = BranchTag::tIf;
 
             Lexer lexer(line);
             auto  tokens = lexer.tokenize();
 
             state.current    = hasBranchTrue(tokens);
-            state.enableElse = brother.enableElse ? true : state.current;
+            state.enableElse = brother.enableElse || state.current;
 
             if (state.current)
             {
@@ -217,7 +217,7 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
             m_dynamicStack.push(state);
             break;
         }
-        case BranchType::tElse:
+        case BranchTag::tElse:
         {
             auto brother = m_dynamicStack.top();
             m_dynamicStack.pop();
@@ -233,7 +233,7 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
             m_dynamicStack.push(state);
             break;
         }
-        case BranchType::tEndif:
+        case BranchTag::tEndif:
         {
             m_dynamicStack.pop();
             break;
@@ -260,22 +260,22 @@ std::string Task::processDynamicBranch(std::string& line)
     std::string expr;
     switch (state.type)
     {
-        case BranchType::tIf:
+        case BranchTag::tIf:
         {
             expr += "if(" + state.conditionExpr + ")";
             break;
         }
-        case BranchType::tElif:
+        case BranchTag::tElif:
         {
             expr += "elif(" + state.conditionExpr + ")";
             break;
         }
-        case BranchType::tElse:
+        case BranchTag::tElse:
         {
             expr += "else";
             break;
         }
-        case BranchType::tEndif:
+        case BranchTag::tEndif:
         default:
             break;
     }
@@ -424,31 +424,31 @@ Task::Type Task::extractTask(std::string& line)
     return Type::tOrigin;
 }
 
-BranchType Task::extractBranchType(std::string& line)
+BranchTag Task::extractBranchTag(std::string& line)
 {
     std::smatch match_branch;
     if (std::regex_search(line, match_branch, g_branch_elif))
     {
         line = match_branch[1].str();
-        return BranchType::tElif;
+        return BranchTag::tElif;
     }
     else if (std::regex_search(line, match_branch, g_branch_if))
     {
         line = match_branch[1].str();
-        return BranchType::tIf;
+        return BranchTag::tIf;
     }
     else if (std::regex_search(line, match_branch, g_branch_else))
     {
         line = match_branch[0].str();
-        return BranchType::tElse;
+        return BranchTag::tElse;
     }
     else if (std::regex_search(line, match_branch, g_branch_endif))
     {
         line = match_branch[0].str();
-        return BranchType::tEndif;
+        return BranchTag::tEndif;
     }
 
-    return BranchType::tEndif;
+    return BranchTag::tEndif;
 }
 
 bool Task::hasBranchTrue(const std::vector<Token>& tokens)

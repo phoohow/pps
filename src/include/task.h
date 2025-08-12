@@ -10,7 +10,8 @@
 
 namespace pps
 {
-enum class BranchType : uint8_t
+
+enum class BranchTag : uint8_t
 {
     tIf,
     tElif,
@@ -20,14 +21,14 @@ enum class BranchType : uint8_t
 
 struct StaticState
 {
-    BranchType type      = BranchType::tIf;
-    bool       choosedIf = false;
-    bool       current   = false;
+    BranchTag type      = BranchTag::tIf;
+    bool      choosedIf = false;
+    bool      current   = false;
 };
 
 struct DynamicState
 {
-    BranchType  type       = BranchType::tIf;
+    BranchTag   type       = BranchTag::tIf;
     bool        enableElse = false;
     bool        current    = false;
     std::string conditionExpr;
@@ -65,9 +66,8 @@ public:
     State process(std::string& line);
 
 private:
-    std::stack<Type> m_stack;
-    State            m_state    = State::sKeep;
-    bool             m_isStatic = true;
+    State m_state    = State::sKeep;
+    bool  m_isStatic = true;
 
     // Branch
 private:
@@ -92,7 +92,7 @@ private:
     void processOrigin(std::string& line);
 
     // Branch
-    BranchType   extractBranchType(std::string& line);
+    BranchTag    extractBranchTag(std::string& line);
     void         evaluateStaticBranch(std::string& line);
     DynamicState evaluateDynamicBranch(std::string& line);
     std::string  processBranch(std::string& line);
