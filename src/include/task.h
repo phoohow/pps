@@ -72,8 +72,7 @@ private:
 
     // Branch
 private:
-    std::stack<MacroBranch>    m_macroStack;
-    std::stack<InstanceBranch> m_instanceStack;
+    std::stack<std::variant<MacroBranch, InstanceBranch>> m_branchStack;
 
     // Prog
 private:
@@ -85,9 +84,12 @@ private:
     std::string m_progSource;
 
 private:
-    Type extractTask(std::string& line);
-    void processState();
-    bool isSkip();
+    Type           extractTask(std::string& line);
+    void           processState();
+    bool           isSkip();
+    bool           inMissedBranch();
+    MacroBranch    popMacro();
+    InstanceBranch popInstance();
 
     // Origin
     void processOrigin(std::string& line);
