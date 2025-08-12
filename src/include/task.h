@@ -35,9 +35,7 @@ struct DynamicState
 
 class Task
 {
-    DefineCTX  m_condition;
-    ReplaceCTX m_replace;
-    IncludeCTX m_include;
+    Context* m_context;
 
     sbin::Loader* m_loader        = nullptr;
     std::string   m_decryptionKey = "";
@@ -61,10 +59,10 @@ public:
 
     Task();
 
-    void setContext(const DefineCTX& define, const ReplaceCTX& replace, const IncludeCTX& include);
-    void setContext(const DefineCTX& define, const ReplaceCTX& replace, sbin::Loader* moduleLoader, const std::string& decryptionKey);
+    void setContext(Context* context);
+    void setContext(Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey);
 
-    State process(std::string& line, bool isStatic);
+    State process(std::string& line);
 
 private:
     std::stack<Type> m_stack;

@@ -30,25 +30,22 @@ Task::Task()
 {
 }
 
-void Task::setContext(const DefineCTX& define, const ReplaceCTX& replace, const IncludeCTX& include)
+void Task::setContext(Context* context)
 {
-    m_condition = define;
-    m_replace   = replace;
-    m_include   = include;
+    m_context = context;
 }
 
-void Task::setContext(const DefineCTX& define, const ReplaceCTX& replace, sbin::Loader* moduleLoader, const std::string& decryptionKey)
+void Task::setContext(Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey)
 {
-    m_condition     = define;
-    m_replace       = replace;
+    m_context       = context;
     m_loader        = moduleLoader;
     m_decryptionKey = decryptionKey;
 }
 
-Task::State Task::process(std::string& line, bool isStatic)
+Task::State Task::process(std::string& line)
 {
     auto originLine = line;
-    m_isStatic      = isStatic;
+    m_isStatic      = true;
     auto type       = extractTask(line);
 
     switch (type)
@@ -308,7 +305,7 @@ void Task::processInclude(std::string& path)
     std::string        line;
     while (std::getline(iss, line))
     {
-        process(line, m_isStatic);
+        process(line);
 
         if (line.empty())
             continue;
@@ -324,7 +321,7 @@ void Task::processInclude(std::string& path)
 std::string Task::extractIncludeFromCTX(const std::string& path)
 {
     std::string oldPath = path;
-    for (const auto& prefix : m_include.prefixes)
+    for (const auto& prefix : m_context->prefixes)
     {
         std::string fullPath = prefix + oldPath;
         if (!std::filesystem::exists(fullPath))
@@ -365,8 +362,8 @@ void Task::processOverride(std::string& origin, std::string& expr)
     if (isSkip())
         return;
 
-    auto iter = m_replace.texts.find(expr);
-    if (iter == m_replace.texts.end())
+    auto iter = m_context->instances.find(expr);
+    if (iter == m_context->instances.end())
     {
         std::cerr << "Fail to find " << expr << " in context." << std::endl;
         expr = "";
@@ -399,7 +396,8 @@ Task::Type Task::extractTask(std::string& line)
     std::smatch match_branch;
     if (std::regex_search(task, match_branch, g_task_branch))
     {
-        line = match_branch[1].str();
+        m_isStatic = false;
+        line       = match_branch[1].str();
         return Type::tBranch;
     }
     else if (std::regex_search(task, match_branch, g_task_include))
@@ -461,7 +459,7 @@ bool Task::hasBranchTrue(const std::vector<Token>& tokens)
         if (token.type != TokenType::tVariable)
             continue;
 
-        auto value = m_condition.bools[token.value];
+        auto value = m_context->bools[token.value];
         if (value)
             return true;
     }
@@ -476,7 +474,7 @@ bool Task::evaluateConditionExpr(const std::string& expr)
 
     Parser    parser(tokens);
     auto      root = parser.parse();
-    Evaluator evaluator(&m_condition);
+    Evaluator evaluator(&m_context->bools, &m_context->ints, &m_context->strings);
     auto      value = evaluator.evaluate(root.get());
 
     return std::get<bool>(value->value);
@@ -484,13 +482,13 @@ bool Task::evaluateConditionExpr(const std::string& expr)
 
 std::string Task::generateConditionExpr(const Node* node)
 {
-    ExprSimplifier simplifier(m_condition.bools);
+    ExprSimplifier simplifier(m_context->bools);
     auto           simplifiedNode = simplifier.simplify(node);
 
     ExprGenerator generator;
     auto          expr = generator.generate(simplifiedNode.get());
 
-    for (const auto& var : m_replace.texts)
+    for (const auto& var : m_context->instances)
     {
         expr = std::regex_replace(expr, std::regex(var.first), var.second);
     }

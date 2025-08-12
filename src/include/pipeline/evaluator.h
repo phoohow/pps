@@ -87,14 +87,16 @@ struct StringValue : Value
 struct DefineCTX;
 class Evaluator
 {
-    DefineCTX* m_define;
+    std::unordered_map<std::string, bool>*        m_iBools;
+    std::unordered_map<std::string, int>*         m_iInts;
+    std::unordered_map<std::string, std::string>* m_iStrings;
 
-    std::unordered_map<std::string, int>         m_intVars;
     std::unordered_map<std::string, bool>        m_boolVars;
+    std::unordered_map<std::string, int>         m_intVars;
     std::unordered_map<std::string, std::string> m_stringVars;
 
 public:
-    explicit Evaluator(DefineCTX* define = nullptr);
+    explicit Evaluator(std::unordered_map<std::string, bool>*, std::unordered_map<std::string, int>*, std::unordered_map<std::string, std::string>*);
 
     std::unique_ptr<Value> evaluate(const Node* node);
 

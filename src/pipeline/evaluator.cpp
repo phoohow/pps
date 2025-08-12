@@ -150,8 +150,8 @@ BoolValue StringValue::operator!=(const StringValue& other) const
     return BoolValue(value != other.value);
 }
 
-Evaluator::Evaluator(DefineCTX* define) :
-    m_define(define) {}
+Evaluator::Evaluator(std::unordered_map<std::string, bool>* b, std::unordered_map<std::string, int>* i, std::unordered_map<std::string, std::string>* s) :
+    m_iBools(b), m_iInts(i), m_iStrings(s) {}
 
 std::unique_ptr<Value> Evaluator::evaluate(const Node* node)
 {
@@ -299,14 +299,23 @@ std::unique_ptr<Value> Evaluator::visitVariable(const VariableNode* node)
     else if (m_stringVars.find(node->name) != m_stringVars.end())
         return std::make_unique<StringValue>(m_stringVars[node->name]);
 
-    if (m_define)
+    if (m_iBools)
     {
-        if (m_define->bools.find(node->name) != m_define->bools.end())
-            return std::make_unique<BoolValue>(m_define->bools[node->name]);
-        if (m_define->ints.find(node->name) != m_define->ints.end())
-            return std::make_unique<IntValue>(m_define->ints[node->name]);
-        if (m_define->strings.find(node->name) != m_define->strings.end())
-            return std::make_unique<StringValue>(m_define->strings[node->name]);
+        auto iter = m_iBools->find(node->name);
+        if (iter != m_iBools->end())
+            return std::make_unique<BoolValue>(iter->second);
+    }
+    if (m_iInts)
+    {
+        auto iter = m_iInts->find(node->name);
+        if (iter != m_iInts->end())
+            return std::make_unique<IntValue>(iter->second);
+    }
+    if (m_iStrings)
+    {
+        auto iter = m_iStrings->find(node->name);
+        if (iter != m_iStrings->end())
+            return std::make_unique<StringValue>(iter->second);
     }
 
     std::cout << "Undefined variable: " + node->name << std::endl;

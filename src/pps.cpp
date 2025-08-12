@@ -110,19 +110,19 @@ PPS::~PPS()
     delete m_task;
 }
 
-std::string PPS::process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, const IncludeCTX& include, bool isStatic)
+std::string PPS::process(const std::string& source, Context* context)
 {
-    m_task->setContext(define, replace, include);
-    return process(source, isStatic);
+    m_task->setContext(context);
+    return process(source);
 }
 
-std::string PPS::process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, sbin::Loader* moduleLoader, const std::string& decryptionKey, bool isStatic)
+std::string PPS::process(const std::string& source, Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey)
 {
-    m_task->setContext(define, replace, moduleLoader, decryptionKey);
-    return process(source, isStatic);
+    m_task->setContext(context, moduleLoader, decryptionKey);
+    return process(source);
 }
 
-std::string PPS::process(const std::string& source, bool isStatic)
+std::string PPS::process(const std::string& source)
 {
     std::istringstream iss(source);
     std::string        line;
@@ -132,7 +132,7 @@ std::string PPS::process(const std::string& source, bool isStatic)
 
     while (std::getline(iss, line))
     {
-        auto state = m_task->process(line, isStatic);
+        auto state = m_task->process(line);
         if (line.empty())
             continue;
 

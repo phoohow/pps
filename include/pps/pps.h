@@ -22,21 +22,21 @@ class Loader;
 namespace pps
 {
 
-struct DefineCTX
+struct Context
 {
+    // Defined variables
     std::unordered_map<std::string, bool>        bools;
     std::unordered_map<std::string, int>         ints;
     std::unordered_map<std::string, std::string> strings;
-};
 
-struct ReplaceCTX
-{
-    std::unordered_map<std::string, std::string> texts;
-};
+    // Branch instances
+    std::unordered_map<std::string, std::string> instances;
 
-struct IncludeCTX
-{
+    // Include prefixes
     std::set<std::string> prefixes;
+
+    // Is static mode
+    bool isStatic = true;
 };
 
 class Task;
@@ -49,12 +49,12 @@ public:
 
     ~PPS();
 
-    std::string process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, const IncludeCTX& include, bool isStatic = true);
+    std::string process(const std::string& source, Context* context);
 
-    std::string process(const std::string& source, const DefineCTX& define, const ReplaceCTX& replace, sbin::Loader* moduleLoader, const std::string& decryptionKey, bool isStatic = true);
+    std::string process(const std::string& source, Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey);
 
 private:
-    std::string process(const std::string& source, bool isStatic);
+    std::string process(const std::string& source);
 };
 
 } // namespace pps
