@@ -19,14 +19,14 @@ enum class BranchTag : uint8_t
     tEndif,
 };
 
-struct StaticState
+struct MacroBranch
 {
     BranchTag type      = BranchTag::tIf;
     bool      choosedIf = false;
     bool      current   = false;
 };
 
-struct DynamicState
+struct InstanceBranch
 {
     BranchTag   type       = BranchTag::tIf;
     bool        enableElse = false;
@@ -45,7 +45,8 @@ public:
     enum class Type
     {
         tOrigin,
-        tBranch,
+        tMacro,
+        tInstance,
         tInclude,
         tOverride,
         tEmbed,
@@ -66,13 +67,13 @@ public:
     State process(std::string& line);
 
 private:
-    State m_state    = State::sKeep;
-    bool  m_isStatic = true;
+    State m_state = State::sKeep;
+    Type  m_type  = Type::tOrigin;
 
     // Branch
 private:
-    std::stack<StaticState>  m_staticStack;
-    std::stack<DynamicState> m_dynamicStack;
+    std::stack<MacroBranch>    m_macroStack;
+    std::stack<InstanceBranch> m_instanceStack;
 
     // Prog
 private:
@@ -92,15 +93,14 @@ private:
     void processOrigin(std::string& line);
 
     // Branch
-    BranchTag    extractBranchTag(std::string& line);
-    void         evaluateStaticBranch(std::string& line);
-    DynamicState evaluateDynamicBranch(std::string& line);
-    std::string  processBranch(std::string& line);
-    std::string  processStaticBranch(std::string& line);
-    std::string  processDynamicBranch(std::string& line);
-    bool         hasBranchTrue(const std::vector<Token>& tokens);
-    bool         evaluateConditionExpr(const std::string& expr);
-    std::string  generateConditionExpr(const Node* node);
+    BranchTag      extractBranchTag(std::string& line);
+    void           evaluateMacroBranch(std::string& line);
+    InstanceBranch evaluateInstanceBranch(std::string& line);
+    void           processMacroBranch(std::string& line);
+    std::string    processInstanceBranch(std::string& line);
+    bool           hasBranchTrue(const std::vector<Token>& tokens);
+    bool           evaluateConditionExpr(const std::string& expr);
+    std::string    generateConditionExpr(const Node* node);
 
     // Include
     void        processInclude(std::string& line);

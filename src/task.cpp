@@ -15,16 +15,17 @@ namespace pps
 
 static auto g_task = std::regex(R"(\*<\$([^>]*)>\*)");
 
-static auto g_task_branch   = std::regex(R"(branch (.+))");
+static auto g_task_macro    = std::regex(R"(macro (.+))");
+static auto g_task_instance = std::regex(R"(instance (.+))");
 static auto g_task_include  = std::regex(R"(include (.+))");
 static auto g_task_override = std::regex(R"(override (.+))");
 static auto g_task_embed    = std::regex(R"(embed .+)");
 static auto g_task_prog     = std::regex(R"(prog .+)");
 
-static auto g_branch_if    = std::regex(R"(if (.+))");
-static auto g_branch_elif  = std::regex(R"(elif (.+))");
-static auto g_branch_else  = std::regex(R"(else)");
-static auto g_branch_endif = std::regex(R"(endif)");
+static auto g_instance_if    = std::regex(R"(if (.+))");
+static auto g_instance_elif  = std::regex(R"(elif (.+))");
+static auto g_instance_else  = std::regex(R"(else)");
+static auto g_instance_endif = std::regex(R"(endif)");
 
 Task::Task()
 {
@@ -45,16 +46,19 @@ void Task::setContext(Context* context, sbin::Loader* moduleLoader, const std::s
 Task::State Task::process(std::string& line)
 {
     auto originLine = line;
-    m_isStatic      = true;
-    auto type       = extractTask(line);
+    m_type          = extractTask(line);
 
-    switch (type)
+    switch (m_type)
     {
         case Type::tOrigin:
             processOrigin(line);
             break;
-        case Type::tBranch:
-            line = processBranch(line);
+        case Type::tMacro:
+            processMacroBranch(line);
+            processState();
+            break;
+        case Type::tInstance:
+            line = processInstanceBranch(line);
             processState();
             break;
         case Type::tInclude:
@@ -80,9 +84,9 @@ void Task::processOrigin(std::string& line)
         line = "";
 }
 
-void Task::evaluateStaticBranch(std::string& line)
+void Task::evaluateMacroBranch(std::string& line)
 {
-    StaticState state;
+    MacroBranch state;
     state.type = extractBranchTag(line);
 
     switch (state.type)
@@ -90,28 +94,28 @@ void Task::evaluateStaticBranch(std::string& line)
         case BranchTag::tIf:
         {
             // parent is false, then skip
-            if (!m_staticStack.empty() && !m_staticStack.top().current)
+            if (!m_macroStack.empty() && !m_macroStack.top().current)
             {
                 state.current = false;
-                m_staticStack.push(state);
+                m_macroStack.push(state);
                 break;
             }
 
             state.current   = evaluateConditionExpr(line);
             state.choosedIf = state.current;
-            m_staticStack.push(state);
+            m_macroStack.push(state);
             break;
         }
         case BranchTag::tElif:
         {
-            auto brother = m_staticStack.top();
-            m_staticStack.pop();
+            auto brother = m_macroStack.top();
+            m_macroStack.pop();
 
             // parent is false, then skip
-            if (!m_staticStack.empty() && !m_staticStack.top().current)
+            if (!m_macroStack.empty() && !m_macroStack.top().current)
             {
                 state.current = false;
-                m_staticStack.push(state);
+                m_macroStack.push(state);
                 break;
             }
 
@@ -126,37 +130,37 @@ void Task::evaluateStaticBranch(std::string& line)
                 state.choosedIf = state.current;
             }
 
-            m_staticStack.push(state);
+            m_macroStack.push(state);
             break;
         }
         case BranchTag::tElse:
         {
-            auto brother = m_staticStack.top();
-            m_staticStack.pop();
+            auto brother = m_macroStack.top();
+            m_macroStack.pop();
 
             // parent is false, then skip
-            if (!m_staticStack.empty() && !m_staticStack.top().current)
+            if (!m_macroStack.empty() && !m_macroStack.top().current)
             {
                 state.current = false;
-                m_staticStack.push(state);
+                m_macroStack.push(state);
                 break;
             }
 
             state.current = !brother.choosedIf;
-            m_staticStack.push(state);
+            m_macroStack.push(state);
             break;
         }
         case BranchTag::tEndif:
         {
-            m_staticStack.pop();
+            m_macroStack.pop();
             break;
         }
     }
 }
 
-DynamicState Task::evaluateDynamicBranch(std::string& line)
+InstanceBranch Task::evaluateInstanceBranch(std::string& line)
 {
-    DynamicState state;
+    InstanceBranch state;
     state.type = extractBranchTag(line);
 
     switch (state.type)
@@ -164,10 +168,10 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
         case BranchTag::tIf:
         {
             // parent is false, then skip
-            if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
+            if (!m_instanceStack.empty() && !m_instanceStack.top().current)
             {
                 state.current = false;
-                m_dynamicStack.push(state);
+                m_instanceStack.push(state);
                 break;
             }
 
@@ -183,18 +187,18 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
                 state.conditionExpr = generateConditionExpr(root.get());
             }
 
-            m_dynamicStack.push(state);
+            m_instanceStack.push(state);
             break;
         }
         case BranchTag::tElif:
         {
-            auto brother = m_dynamicStack.top();
-            m_dynamicStack.pop();
+            auto brother = m_instanceStack.top();
+            m_instanceStack.pop();
             // parent is false, then skip
-            if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
+            if (!m_instanceStack.empty() && !m_instanceStack.top().current)
             {
                 state.current = false;
-                m_dynamicStack.push(state);
+                m_instanceStack.push(state);
                 break;
             }
 
@@ -214,28 +218,28 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
                 state.conditionExpr = generateConditionExpr(root.get());
             }
 
-            m_dynamicStack.push(state);
+            m_instanceStack.push(state);
             break;
         }
         case BranchTag::tElse:
         {
-            auto brother = m_dynamicStack.top();
-            m_dynamicStack.pop();
+            auto brother = m_instanceStack.top();
+            m_instanceStack.pop();
             // parent is false, then skip
-            if (!m_dynamicStack.empty() && !m_dynamicStack.top().current)
+            if (!m_instanceStack.empty() && !m_instanceStack.top().current)
             {
                 state.current = false;
-                m_dynamicStack.push(state);
+                m_instanceStack.push(state);
                 break;
             }
 
             state.current = brother.enableElse;
-            m_dynamicStack.push(state);
+            m_instanceStack.push(state);
             break;
         }
         case BranchTag::tEndif:
         {
-            m_dynamicStack.pop();
+            m_instanceStack.pop();
             break;
         }
         default:
@@ -245,15 +249,14 @@ DynamicState Task::evaluateDynamicBranch(std::string& line)
     return state;
 }
 
-std::string Task::processStaticBranch(std::string& line)
+void Task::processMacroBranch(std::string& line)
 {
-    evaluateStaticBranch(line);
-    return "";
+    evaluateMacroBranch(line);
 }
 
-std::string Task::processDynamicBranch(std::string& line)
+std::string Task::processInstanceBranch(std::string& line)
 {
-    auto state = evaluateDynamicBranch(line);
+    auto state = evaluateInstanceBranch(line);
     if (!state.current)
         return "";
 
@@ -281,14 +284,6 @@ std::string Task::processDynamicBranch(std::string& line)
     }
 
     return expr;
-}
-
-std::string Task::processBranch(std::string& line)
-{
-    if (m_isStatic)
-        return processStaticBranch(line);
-    else
-        return processDynamicBranch(line);
 }
 
 void Task::processInclude(std::string& path)
@@ -393,31 +388,35 @@ Task::Type Task::extractTask(std::string& line)
         return Type::tOrigin;
 
     auto        task = match_task[1].str();
-    std::smatch match_branch;
-    if (std::regex_search(task, match_branch, g_task_branch))
+    std::smatch match_type;
+    if (std::regex_search(task, match_type, g_task_macro))
     {
-        m_isStatic = false;
-        line       = match_branch[1].str();
-        return Type::tBranch;
+        line = match_type[1].str();
+        return Type::tMacro;
     }
-    else if (std::regex_search(task, match_branch, g_task_include))
+    if (std::regex_search(task, match_type, g_task_instance))
     {
-        line = match_branch[1].str();
+        line = match_type[1].str();
+        return Type::tInstance;
+    }
+    else if (std::regex_search(task, match_type, g_task_include))
+    {
+        line = match_type[1].str();
         return Type::tInclude;
     }
-    else if (std::regex_search(task, match_branch, g_task_override))
+    else if (std::regex_search(task, match_type, g_task_override))
     {
-        line = match_branch[1].str();
+        line = match_type[1].str();
         return Type::tOverride;
     }
-    else if (std::regex_search(task, match_branch, g_task_embed))
+    else if (std::regex_search(task, match_type, g_task_embed))
     {
-        line = match_branch[0].str();
+        line = match_type[0].str();
         return Type::tEmbed;
     }
-    else if (std::regex_search(task, match_branch, g_task_prog))
+    else if (std::regex_search(task, match_type, g_task_prog))
     {
-        line = match_branch[0].str();
+        line = match_type[0].str();
         return Type::tProg;
     }
 
@@ -426,25 +425,25 @@ Task::Type Task::extractTask(std::string& line)
 
 BranchTag Task::extractBranchTag(std::string& line)
 {
-    std::smatch match_branch;
-    if (std::regex_search(line, match_branch, g_branch_elif))
+    std::smatch match_tag;
+    if (std::regex_search(line, match_tag, g_instance_elif))
     {
-        line = match_branch[1].str();
+        line = match_tag[1].str();
         return BranchTag::tElif;
     }
-    else if (std::regex_search(line, match_branch, g_branch_if))
+    else if (std::regex_search(line, match_tag, g_instance_if))
     {
-        line = match_branch[1].str();
+        line = match_tag[1].str();
         return BranchTag::tIf;
     }
-    else if (std::regex_search(line, match_branch, g_branch_else))
+    else if (std::regex_search(line, match_tag, g_instance_else))
     {
-        line = match_branch[0].str();
+        line = match_tag[0].str();
         return BranchTag::tElse;
     }
-    else if (std::regex_search(line, match_branch, g_branch_endif))
+    else if (std::regex_search(line, match_tag, g_instance_endif))
     {
-        line = match_branch[0].str();
+        line = match_tag[0].str();
         return BranchTag::tEndif;
     }
 
@@ -459,8 +458,8 @@ bool Task::hasBranchTrue(const std::vector<Token>& tokens)
         if (token.type != TokenType::tVariable)
             continue;
 
-        auto value = m_context->bools[token.value];
-        if (value)
+        auto value = m_context->bools.find(token.value);
+        if (value != m_context->bools.end() && value->second)
             return true;
     }
 
@@ -498,13 +497,13 @@ std::string Task::generateConditionExpr(const Node* node)
 
 void Task::processState()
 {
-    if (m_isStatic)
+    if (m_type == Type::tMacro)
     {
-        m_state = m_staticStack.empty() || m_staticStack.top().current ? State::sKeep : State::sSkip;
+        m_state = m_macroStack.empty() || m_macroStack.top().current ? State::sKeep : State::sSkip;
     }
-    else
+    else if (m_type == Type::tInstance)
     {
-        m_state = m_dynamicStack.empty() || m_dynamicStack.top().current ? State::sKeep : State::sSkip;
+        m_state = m_instanceStack.empty() || m_instanceStack.top().current ? State::sKeep : State::sSkip;
     }
 }
 
