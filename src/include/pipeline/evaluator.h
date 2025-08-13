@@ -96,7 +96,9 @@ class Evaluator
     std::unordered_map<std::string, std::string> m_stringVars;
 
 public:
-    explicit Evaluator(std::unordered_map<std::string, bool>*, std::unordered_map<std::string, int>*, std::unordered_map<std::string, std::string>*);
+    explicit Evaluator(std::unordered_map<std::string, bool>*        b = nullptr,
+                       std::unordered_map<std::string, int>*         i = nullptr,
+                       std::unordered_map<std::string, std::string>* s = nullptr);
 
     std::unique_ptr<Value> evaluate(const Node* node);
 

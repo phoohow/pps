@@ -19,21 +19,14 @@ int main()
 
     pps::Parser parser(tokens);
     auto        expr = parser.parse();
-    std::cout << "Original Parser:" << std::endl;
-    expr->print();
 
     pps::ExprSimplifier simplifier(variables);
     auto                simplifiedExpr = simplifier.simplify(expr.get());
 
-    std::cout << "\nSimplified Parser:" << std::endl;
-    if (simplifiedExpr)
-        simplifiedExpr->print();
-    else
-        std::cout << "false" << std::endl;
-
     pps::ExprGenerator generator;
     std::string        expressionString = generator.generate(simplifiedExpr.get());
 
+    std::cout << "Origin: " << input << std::endl;
     std::cout << "\nGenerated:" << expressionString << std::endl;
 
     return 0;

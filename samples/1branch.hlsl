@@ -1,31 +1,31 @@
 void main(out float4 color)
 {
-    /*<$branch if @hasBaseColorMap>*/
+    /*<$instance if @hasBaseColorMap>*/
     {
         float4 value = texture(baseColorMap, uv);
         color.rgb *= value.rgb;
 
-        /*<$branch if @useBaseColorMapAlpha>*/
+        /*<$macro if @useBaseColorMapAlpha>*/
         color.a *= value.a;
-        /*<$branch else>*/
+        /*<$macro else>*/
         color.a *= 0.5;
-        /*<$branch endif>*/
+        /*<$macro endif>*/
     }
-    /*<$branch endif>*/
+    /*<$instance endif>*/
 
-    /*<$branch if @isRaster && @useShadow>*/
+    /*<$instance if @isRaster && @useShadow>*/
     {
         float shadow = PCSS(...);
         color.rgb *= shadow;
     }
-    /*<$branch elif @isRayTracing>*/
+    /*<$instance elif @isRayTracing>*/
     {
         float shadow = RayShow(...);
         color.rgb *= shadow;
     }
-    /*<$branch else>*/
+    /*<$instance else>*/
     {
         color.rgb *= 0.9f;
     }
-    /*<$branch endif>*/
+    /*<$instance endif>*/
 }

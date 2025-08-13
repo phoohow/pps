@@ -3,46 +3,44 @@
 
 int main()
 {
-    pps::DefineCTX conditions;
-    conditions.bools = {
+    pps::Context ctx;
+    ctx.isStatic = false;
+    ctx.bools    = {
         {"@useBaseColorMap", true},
         {"@useBaseColorAlpha", true},
         {"@isRaster", true},
         {"@useShadow", false},
     };
-
-    pps::ReplaceCTX replace;
-    replace.texts = {
+    ctx.instances = {
         {"@useBaseColorMap", "mat.useBaseColorMap"},
         {"@useBaseColorAlpha", "mat.useBaseColorAlpha"},
         {"@useShadow", "scene.useShadow"},
     };
-
-    pps::IncludeCTX include;
-    include.prefixes = {
+    ctx.prefixes = {
         std::string(SOURCE_DIR) + "/include/",
     };
 
-    pps::PPS    lang;
-    std::string line   = R"(
+    std::string line = R"(
 /*<$include pps/pps.h>*/
 
-/*<$branch if @useBaseColorMap>*/
+/*<$instance if @useBaseColorMap>*/
 {
     float4 value = baseColorMap(...);
     color.rgb *= value.rgb;
-    /*<$branch if @useBaseColorAlpha>*/
+    /*<$instance if @useBaseColorAlpha>*/
     color.a *= value.a;
-    /*<$branch endif>*/
+    /*<$instance endif>*/
 }
-/*<$branch endif>*/
-/*<$branch if @isRaster && @useShadow>*/
+/*<$instance endif>*/
+/*<$instance if @isRaster && @useShadow>*/
 {
     color *= shadow(...);   
 }
-/*<$branch endif>*/
+/*<$instance endif>*/
 )";
-    auto        result = lang.process(line, conditions, replace, include, false);
+
+    pps::PPS lang;
+    auto     result = lang.process(line, &ctx);
 
     std::cout << "pps result:\n"
               << result << std::endl;

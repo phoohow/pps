@@ -43,9 +43,7 @@ int main(int argc, char* argv[])
     bool isStatic = true;
 
     // Contexts for PPS processing
-    pps::DefineCTX  defineCtx;
-    pps::ReplaceCTX replaceCtx;
-    pps::IncludeCTX includeCtx;
+    pps::Context ctx;
 
     std::string inputSource;
     std::string outputPath;
@@ -72,7 +70,7 @@ int main(int argc, char* argv[])
         // Mode options
         else if (arg == "--static" || arg == "--dynamic")
         {
-            isStatic = (arg == "--static");
+            ctx.isStatic = (arg == "--static");
         }
         // Database option
         else if (arg == "--db" && i + 1 < argc)
@@ -87,12 +85,12 @@ int main(int argc, char* argv[])
                 // Parse as boolean
                 if (value == "true" || value == "false")
                 {
-                    defineCtx.bools[key] = (value == "true");
+                    ctx.bools[key] = (value == "true");
                 }
                 else
                 {
                     // If not explicitly true/false, treat as true if value is non-empty
-                    defineCtx.bools[key] = !value.empty();
+                    ctx.bools[key] = !value.empty();
                 }
             }
         }
@@ -109,8 +107,8 @@ int main(int argc, char* argv[])
                 // Try to parse as integer
                 try
                 {
-                    int intValue        = std::stoi(value);
-                    defineCtx.ints[key] = intValue;
+                    int intValue  = std::stoi(value);
+                    ctx.ints[key] = intValue;
                 }
                 catch (...)
                 {
@@ -127,9 +125,9 @@ int main(int argc, char* argv[])
             size_t pos = dsOption.find('=');
             if (pos != std::string::npos)
             {
-                std::string key        = dsOption.substr(0, pos);
-                std::string value      = dsOption.substr(pos + 1);
-                defineCtx.strings[key] = value;
+                std::string key   = dsOption.substr(0, pos);
+                std::string value = dsOption.substr(pos + 1);
+                ctx.strings[key]  = value;
             }
         }
         // Rule option
@@ -140,16 +138,16 @@ int main(int argc, char* argv[])
             size_t pos = rOption.find('=');
             if (pos != std::string::npos)
             {
-                std::string key       = rOption.substr(0, pos);
-                std::string value     = rOption.substr(pos + 1);
-                replaceCtx.texts[key] = value;
+                std::string key    = rOption.substr(0, pos);
+                std::string value  = rOption.substr(pos + 1);
+                ctx.instances[key] = value;
             }
         }
         // Include path option
         else if (arg == "--i" && i + 1 < argc)
         {
             std::string includePath = argv[++i];
-            includeCtx.prefixes.insert(includePath);
+            ctx.prefixes.insert(includePath);
         }
         // Input file option
         else if (arg == "--input" && i + 1 < argc)
@@ -207,14 +205,14 @@ int main(int argc, char* argv[])
             if (mode == Mode::Codegen)
             {
                 // Code generation task
-                result = processor.process(sourceCode, defineCtx, replaceCtx, includeCtx, isStatic);
+                result = processor.process(sourceCode, &ctx);
             }
             else if (mode == Mode::Evaluate)
             {
                 // Evaluation task
                 // For now, we'll just process the source code as with codegen
                 // but this could be extended to do specific evaluation tasks
-                result = processor.process(sourceCode, defineCtx, replaceCtx, includeCtx, isStatic);
+                result = processor.process(sourceCode, &ctx);
             }
 
             // Output result to file or stdout
