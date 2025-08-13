@@ -86,7 +86,7 @@ public:
 
 class Lexer
 {
-    std::string m_source;
+    const std::string& m_source;
 
     size_t m_pos;
     char   m_currentChar;

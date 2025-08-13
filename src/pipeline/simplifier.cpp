@@ -44,18 +44,14 @@ std::unique_ptr<Node> ExprSimplifier::simplifyBinaryOpNode(const BinaryOpNode* n
     auto left  = simplifyNode(node->left.get());
     auto right = simplifyNode(node->right.get());
 
-    if (node->op.type == TokenType::tOp_and)
-    {
-        if (!left && !right)
-            return nullptr;
-        if (!left)
-            return std::move(right);
-        if (!right)
-            return std::move(left);
-        return std::make_unique<BinaryOpNode>(node->op, std::move(left), std::move(right));
-    }
-
-    if (node->op.type == TokenType::tOp_or)
+    if (node->op.type == TokenType::tOp_and ||
+        node->op.type == TokenType::tOp_or ||
+        node->op.type == TokenType::tOp_equal ||
+        node->op.type == TokenType::tOp_unequal ||
+        node->op.type == TokenType::tOp_greater ||
+        node->op.type == TokenType::tOp_less ||
+        node->op.type == TokenType::tOp_greaterEqual ||
+        node->op.type == TokenType::tOp_lessEqual)
     {
         if (!left && !right)
             return nullptr;

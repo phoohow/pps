@@ -101,7 +101,8 @@ private:
     void           processMacroBranch(std::string& line);
     std::string    processInstanceBranch(std::string& line);
     bool           hasBranchTrue(const std::vector<Token>& tokens);
-    bool           evaluateConditionExpr(const std::string& expr);
+    bool           isValidConditionExpr(const Node* node);
+    bool           evaluateConditionExpr(const std::string& line);
     std::string    generateConditionExpr(const Node* node);
 
     // Include

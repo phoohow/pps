@@ -10,7 +10,7 @@ namespace pps
 class Node;
 class Parser
 {
-    std::vector<Token> m_tokens;
+    const std::vector<Token>& m_tokens;
 
     size_t m_pos;
 

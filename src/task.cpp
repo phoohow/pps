@@ -167,17 +167,18 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
                 break;
             }
 
-            Lexer lexer(line);
-            auto  tokens     = lexer.tokenize();
-            state.current    = hasBranchTrue(tokens);
-            state.enableElse = state.current;
+            Lexer          lexer(line);
+            auto           tokens = lexer.tokenize();
+            Parser         parser(tokens);
+            auto           root = parser.parse();
+            ExprSimplifier simplifier(m_context->bools);
+            auto           simplifiedNode = simplifier.simplify(root.get());
 
+            state.current = isValidConditionExpr(simplifiedNode.get());
             if (state.current)
-            {
-                Parser parser(tokens);
-                auto   root         = parser.parse();
-                state.conditionExpr = generateConditionExpr(root.get());
-            }
+                state.conditionExpr = generateConditionExpr(simplifiedNode.get());
+
+            state.enableElse = state.current;
 
             m_branchStack.push(state);
             break;
@@ -195,18 +196,18 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
             if (!brother.enableElse)
                 state.type = BranchTag::tIf;
 
-            Lexer lexer(line);
-            auto  tokens = lexer.tokenize();
+            Lexer          lexer(line);
+            auto           tokens = lexer.tokenize();
+            Parser         parser(tokens);
+            auto           root = parser.parse();
+            ExprSimplifier simplifier(m_context->bools);
+            auto           simplifiedNode = simplifier.simplify(root.get());
 
-            state.current    = hasBranchTrue(tokens);
-            state.enableElse = brother.enableElse || state.current;
-
+            state.current = isValidConditionExpr(simplifiedNode.get());
             if (state.current)
-            {
-                Parser parser(tokens);
-                auto   root         = parser.parse();
-                state.conditionExpr = generateConditionExpr(root.get());
-            }
+                state.conditionExpr = generateConditionExpr(simplifiedNode.get());
+
+            state.enableElse = brother.enableElse || state.current;
 
             m_branchStack.push(state);
             break;
@@ -456,9 +457,17 @@ bool Task::hasBranchTrue(const std::vector<Token>& tokens)
     return false;
 }
 
-bool Task::evaluateConditionExpr(const std::string& expr)
+bool Task::isValidConditionExpr(const Node* node)
 {
-    Lexer lexer(expr);
+    Evaluator evaluator(&m_context->bools, &m_context->ints, &m_context->strings);
+    auto      value = evaluator.evaluate(node);
+
+    return value->type == ValueType::tBool;
+}
+
+bool Task::evaluateConditionExpr(const std::string& line)
+{
+    Lexer lexer(line);
     auto  tokens = lexer.tokenize();
 
     Parser    parser(tokens);
@@ -471,11 +480,8 @@ bool Task::evaluateConditionExpr(const std::string& expr)
 
 std::string Task::generateConditionExpr(const Node* node)
 {
-    ExprSimplifier simplifier(m_context->bools);
-    auto           simplifiedNode = simplifier.simplify(node);
-
     ExprGenerator generator;
-    auto          expr = generator.generate(simplifiedNode.get());
+    auto          expr = generator.generate(node);
 
     for (const auto& var : m_context->instances)
     {
