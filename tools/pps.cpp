@@ -20,21 +20,21 @@ enum class Mode
 void showUsage()
 {
     std::cout << "Usage: pps [task] [mode] [option] <input_file.hlsl>\n"
-              << "Tasks:"
-              << "  --codegen    Code generation (default)"
-              << "  --evaluate   Evaluation"
-              << "  --help       Show this help message"
-              << "Modes:"
-              << "  --static     Static mode (default)"
-              << "  --dynamic    Dynamic mode"
-              << "Options:"
-              << "  --db <xx=xxx>     Define boolean variable (stored in defineCtx)"
-              << "  --di <xx=xxx>     Define integer variable (stored in defineCtx)"
-              << "  --ds <xx=xxx>     Define string variable (stored in defineCtx)"
-              << "  --r <xx=xxx>      Define replaceCtx text"
-              << "  --i <path>        Add include path"
-              << "  --input <path>    Specify input HLSL file"
-              << "  --output <path>   Specify output file" << std::endl;
+              << "Tasks:\n"
+              << "  --codegen            Code generation (default)\n"
+              << "  --evaluate           Evaluation\n"
+              << "  --help               Show this help message\n"
+              << "Modes:\n"
+              << "  --static             Static mode (default)\n"
+              << "  --dynamic            Dynamic mode\n"
+              << "Options:\n"
+              << "  --db <xx=xxx>        Define boolean variable\n"
+              << "  --di <xx=xxx>        Define integer variable\n"
+              << "  --ds <xx=xxx>        Define string variable\n"
+              << "  --instance <xx=xxx>  Define instance context\n"
+              << "  --include <path>     Add include path\n"
+              << "  --input <path>       Specify input HLSL file\n"
+              << "  --output <path>      Specify output file" << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
         else if (arg == "--db" && i + 1 < argc)
         {
             std::string dbOption = argv[++i];
-            // Parse dbOption as key=value and add to defineCtx
+            // Parse dbOption as key=value and add to Context
             size_t pos = dbOption.find('=');
             if (pos != std::string::npos)
             {
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
         else if (arg == "--di" && i + 1 < argc)
         {
             std::string diOption = argv[++i];
-            // Parse diOption as key=value and add to defineCtx
+            // Parse diOption as key=value and add to Context
             size_t pos = diOption.find('=');
             if (pos != std::string::npos)
             {
@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
         else if (arg == "--ds" && i + 1 < argc)
         {
             std::string dsOption = argv[++i];
-            // Parse dsOption as key=value and add to defineCtx
+            // Parse dsOption as key=value and add to Context
             size_t pos = dsOption.find('=');
             if (pos != std::string::npos)
             {
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
         else if (arg == "--r" && i + 1 < argc)
         {
             std::string rOption = argv[++i];
-            // Parse rOption as key=value and add to defineCtx
+            // Parse rOption as key=value and add to Context
             size_t pos = rOption.find('=');
             if (pos != std::string::npos)
             {
@@ -166,27 +166,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Check if we have an input source
-    if (inputSource.empty())
-    {
-        std::cerr << "Error: No input source specified" << std::endl;
-        showUsage();
-        return 1;
-    }
-
-    // Read input source file
-    std::ifstream file(inputSource);
-    if (!file.is_open())
-    {
-        std::cerr << "Error: Could not open file " << inputSource << std::endl;
-        return 1;
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string sourceCode = buffer.str();
-    file.close();
-
     switch (mode)
     {
         case Mode::Help:
@@ -201,6 +180,27 @@ int main(int argc, char* argv[])
             // Process based on task
             pps::PPS    processor;
             std::string result;
+
+            // Check if we have an input source
+            if (inputSource.empty())
+            {
+                std::cerr << "Error: No input source specified" << std::endl;
+                showUsage();
+                return 1;
+            }
+
+            // Read input source file
+            std::ifstream file(inputSource);
+            if (!file.is_open())
+            {
+                std::cerr << "Error: Could not open file " << inputSource << std::endl;
+                return 1;
+            }
+
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            std::string sourceCode = buffer.str();
+            file.close();
 
             if (mode == Mode::Codegen)
             {
