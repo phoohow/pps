@@ -9,10 +9,10 @@ namespace pps
 {
 class ExprSimplifier
 {
-    std::unordered_map<std::string, bool> m_variables;
+    const std::unordered_map<std::string, std::string>& m_instances;
 
 public:
-    explicit ExprSimplifier(const std::unordered_map<std::string, bool>& variables);
+    explicit ExprSimplifier(const std::unordered_map<std::string, std::string>& instances);
 
     std::unique_ptr<Node> simplify(const Node* node);
 

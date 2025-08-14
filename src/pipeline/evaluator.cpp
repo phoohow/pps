@@ -160,6 +160,8 @@ std::unique_ptr<Value> Evaluator::evaluate(const Node* node)
 
 std::unique_ptr<Value> Evaluator::visit(const Node* node)
 {
+    if (!node) return std::make_unique<NullValue>();
+
     switch (node->type())
     {
         case NodeType::tLit_int:

@@ -171,7 +171,7 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
             auto           tokens = lexer.tokenize();
             Parser         parser(tokens);
             auto           root = parser.parse();
-            ExprSimplifier simplifier(m_context->bools);
+            ExprSimplifier simplifier(m_context->instances);
             auto           simplifiedNode = simplifier.simplify(root.get());
 
             state.current = isValidConditionExpr(simplifiedNode.get());
@@ -200,7 +200,7 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
             auto           tokens = lexer.tokenize();
             Parser         parser(tokens);
             auto           root = parser.parse();
-            ExprSimplifier simplifier(m_context->bools);
+            ExprSimplifier simplifier(m_context->instances);
             auto           simplifiedNode = simplifier.simplify(root.get());
 
             state.current = isValidConditionExpr(simplifiedNode.get());
@@ -241,6 +241,7 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
 void Task::processMacroBranch(std::string& line)
 {
     evaluateMacroBranch(line);
+    line = "";
 }
 
 std::string Task::processInstanceBranch(std::string& line)

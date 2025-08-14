@@ -9,6 +9,7 @@ namespace pps
 {
 enum class ValueType
 {
+    tNull,
     tBool,
     tInt,
     tString,
@@ -23,6 +24,13 @@ struct Value
         type(_type), value(_value) {}
     virtual ~Value()           = default;
     virtual void print() const = 0;
+};
+
+struct NullValue : Value
+{
+    NullValue() :
+        Value(ValueType::tNull, false) {}
+    void print() const override {}
 };
 
 struct BoolValue : Value

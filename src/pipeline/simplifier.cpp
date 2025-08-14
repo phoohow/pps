@@ -2,8 +2,8 @@
 
 namespace pps
 {
-ExprSimplifier::ExprSimplifier(const std::unordered_map<std::string, bool>& variables) :
-    m_variables(variables) {}
+ExprSimplifier::ExprSimplifier(const std::unordered_map<std::string, std::string>& instances) :
+    m_instances(instances) {}
 
 std::unique_ptr<Node> ExprSimplifier::simplify(const Node* node)
 {
@@ -33,10 +33,9 @@ std::unique_ptr<Node> ExprSimplifier::simplifyNode(const Node* node)
 
 std::unique_ptr<Node> ExprSimplifier::simplifyVariableNode(const VariableNode* node)
 {
-    auto it = m_variables.find(node->name);
-    if (it != m_variables.end() && !it->second)
-        return nullptr;
-    return std::make_unique<VariableNode>(node->name);
+    auto iter = m_instances.find(node->name);
+    return iter == m_instances.end() ? nullptr :
+                                       std::make_unique<VariableNode>(node->name);
 }
 
 std::unique_ptr<Node> ExprSimplifier::simplifyBinaryOpNode(const BinaryOpNode* node)
