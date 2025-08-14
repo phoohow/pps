@@ -19,14 +19,14 @@ enum class BranchTag : uint8_t
     tEndif,
 };
 
-struct MacroBranch
+struct StaticBranch
 {
     BranchTag type      = BranchTag::tIf;
     bool      choosedIf = false;
     bool      current   = false;
 };
 
-struct InstanceBranch
+struct DynamicBranch
 {
     BranchTag   type       = BranchTag::tIf;
     bool        enableElse = false;
@@ -72,7 +72,7 @@ private:
 
     // Branch
 private:
-    std::stack<std::variant<MacroBranch, InstanceBranch>> m_branchStack;
+    std::stack<std::variant<StaticBranch, DynamicBranch>> m_branchStack;
 
     // Prog
 private:
@@ -84,26 +84,26 @@ private:
     std::string m_progSource;
 
 private:
-    Type           extractTask(std::string& line);
-    void           processState();
-    bool           isSkip();
-    bool           inMissedBranch();
-    MacroBranch    popMacro();
-    InstanceBranch popInstance();
+    Type          extractTask(std::string& line);
+    void          processState();
+    bool          isSkip();
+    bool          inMissedBranch();
+    StaticBranch  popStatic();
+    DynamicBranch popDynamic();
 
     // Origin
     void processOrigin(std::string& line);
 
     // Branch
-    BranchTag      extractBranchTag(std::string& line);
-    void           evaluateMacroBranch(std::string& line);
-    InstanceBranch evaluateInstanceBranch(std::string& line);
-    void           processMacroBranch(std::string& line);
-    std::string    processInstanceBranch(std::string& line);
-    bool           hasBranchTrue(const std::vector<Token>& tokens);
-    bool           isValidConditionExpr(const Node* node);
-    bool           evaluateConditionExpr(const std::string& line);
-    std::string    generateConditionExpr(const Node* node);
+    BranchTag     extractBranchTag(std::string& line);
+    void          evaluateStaticBranch(std::string& line);
+    DynamicBranch evaluateDynamicBranch(std::string& line);
+    void          processStaticBranch(std::string& line);
+    std::string   processDynamicBranch(std::string& line);
+    bool          hasBranchTrue(const std::vector<Token>& tokens);
+    bool          isValidConditionExpr(const Node* node);
+    bool          evaluateConditionExpr(const std::string& line);
+    std::string   generateConditionExpr(const Node* node);
 
     // Include
     void        processInclude(std::string& line);

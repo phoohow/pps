@@ -23,20 +23,20 @@ int main()
 SamplerState s_LinearWrap : register(s0 /*<$override @sLinearWrap>*/);
 SamplerState s_LinearClamp : register(s1 /*<$override @sLinearClamp>*/);
 
-/*<$instance if @useBaseColorMap>*/
+/*<$dynamic if @useBaseColorMap>*/
 {
     float4 value = baseColorMap(...);
     color.rgb *= value.rgb;
-    /*<$instance if @useBaseColorAlpha>*/
+    /*<$dynamic if @useBaseColorAlpha>*/
     color.a *= value.a;
-    /*<$instance endif>*/
+    /*<$dynamic endif>*/
 }
-/*<$instance endif>*/
-/*<$instance if @isRaster && @useShadow>*/
+/*<$dynamic endif>*/
+/*<$dynamic if @isRaster && @useShadow>*/
 {
     color *= shadow(...);   
 }
-/*<$instance endif>*/
+/*<$dynamic endif>*/
 )";
 
     pps::PPS lang;

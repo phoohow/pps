@@ -15,8 +15,8 @@ namespace pps
 
 static auto g_task = std::regex(R"(\*<\$([^>]*)>\*)");
 
-static auto g_task_macro    = std::regex(R"(macro (.+))");
-static auto g_task_instance = std::regex(R"(instance (.+))");
+static auto g_task_static   = std::regex(R"(static (.+))");
+static auto g_task_dynamic  = std::regex(R"(dynamic (.+))");
 static auto g_task_include  = std::regex(R"(include (.+))");
 static auto g_task_override = std::regex(R"(override (.+))");
 static auto g_task_embed    = std::regex(R"(embed .+)");
@@ -54,11 +54,11 @@ Task::State Task::process(std::string& line)
             processOrigin(line);
             break;
         case Type::tMacro:
-            processMacroBranch(line);
+            processStaticBranch(line);
             processState();
             break;
         case Type::tInstance:
-            line = processInstanceBranch(line);
+            line = processDynamicBranch(line);
             processState();
             break;
         case Type::tInclude:
@@ -84,9 +84,9 @@ void Task::processOrigin(std::string& line)
         line = "";
 }
 
-void Task::evaluateMacroBranch(std::string& line)
+void Task::evaluateStaticBranch(std::string& line)
 {
-    MacroBranch state;
+    StaticBranch state;
     state.type = extractBranchTag(line);
 
     switch (state.type)
@@ -107,7 +107,7 @@ void Task::evaluateMacroBranch(std::string& line)
         }
         case BranchTag::tElif:
         {
-            auto brother = popMacro();
+            auto brother = popStatic();
             if (inMissedBranch())
             {
                 state.current = false;
@@ -131,7 +131,7 @@ void Task::evaluateMacroBranch(std::string& line)
         }
         case BranchTag::tElse:
         {
-            auto brother = popMacro();
+            auto brother = popStatic();
             if (inMissedBranch())
             {
                 state.current = false;
@@ -151,9 +151,9 @@ void Task::evaluateMacroBranch(std::string& line)
     }
 }
 
-InstanceBranch Task::evaluateInstanceBranch(std::string& line)
+DynamicBranch Task::evaluateDynamicBranch(std::string& line)
 {
-    InstanceBranch state;
+    DynamicBranch state;
     state.type = extractBranchTag(line);
 
     switch (state.type)
@@ -185,7 +185,7 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
         }
         case BranchTag::tElif:
         {
-            auto brother = popInstance();
+            auto brother = popDynamic();
             if (inMissedBranch())
             {
                 state.current = false;
@@ -214,7 +214,7 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
         }
         case BranchTag::tElse:
         {
-            auto brother = popInstance();
+            auto brother = popDynamic();
             if (inMissedBranch())
             {
                 state.current = false;
@@ -238,15 +238,15 @@ InstanceBranch Task::evaluateInstanceBranch(std::string& line)
     return state;
 }
 
-void Task::processMacroBranch(std::string& line)
+void Task::processStaticBranch(std::string& line)
 {
-    evaluateMacroBranch(line);
+    evaluateStaticBranch(line);
     line = "";
 }
 
-std::string Task::processInstanceBranch(std::string& line)
+std::string Task::processDynamicBranch(std::string& line)
 {
-    auto state = evaluateInstanceBranch(line);
+    auto state = evaluateDynamicBranch(line);
     if (!state.current)
         return "";
 
@@ -379,12 +379,12 @@ Task::Type Task::extractTask(std::string& line)
 
     auto        task = match_task[1].str();
     std::smatch match_type;
-    if (std::regex_search(task, match_type, g_task_macro))
+    if (std::regex_search(task, match_type, g_task_static))
     {
         line = match_type[1].str();
         return Type::tMacro;
     }
-    if (std::regex_search(task, match_type, g_task_instance))
+    if (std::regex_search(task, match_type, g_task_dynamic))
     {
         if (m_context->isStatic) return Type::tMacro;
 
@@ -511,16 +511,16 @@ bool Task::inMissedBranch()
         !std::visit([](const auto& b) { return b.current; }, m_branchStack.top());
 }
 
-MacroBranch Task::popMacro()
+StaticBranch Task::popStatic()
 {
-    auto branch = std::get<MacroBranch>(m_branchStack.top());
+    auto branch = std::get<StaticBranch>(m_branchStack.top());
     m_branchStack.pop();
     return branch;
 }
 
-InstanceBranch Task::popInstance()
+DynamicBranch Task::popDynamic()
 {
-    auto branch = std::get<InstanceBranch>(m_branchStack.top());
+    auto branch = std::get<DynamicBranch>(m_branchStack.top());
     m_branchStack.pop();
     return branch;
 }

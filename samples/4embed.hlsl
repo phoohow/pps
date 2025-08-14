@@ -1,15 +1,15 @@
 SamplerState s_LinearWrap : register(s0);
 
-/*<$macro if @hasEmbedAO>*/
+/*<$static if @hasEmbedAO>*/
 /*<$embed @embedAO>*/
-/*<$macro endif>*/
+/*<$static endif>*/
 
 void main(out float4 color)
 {
     float ao = 1.0f;
-    /*<$macro if @hasEmbedAO>*/
+    /*<$static if @hasEmbedAO>*/
     /*<$embed #embedAO>*/;
-    /*<$macro endif>*/
+    /*<$static endif>*/
 
     color *= ao;
 }

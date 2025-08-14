@@ -1,6 +1,6 @@
-/*<$macro if @useBasic>*/
+/*<$static if @useBasic>*/
 /*<$include util/basic.hlsl>*/
-/*<$macro endif>*/
+/*<$static endif>*/
 
 void main(out float4 color)
 {

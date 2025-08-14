@@ -23,20 +23,20 @@ int main()
     std::string line = R"(
 /*<$include pps/pps.h>*/
 
-/*<$instance if @useBaseColorMap>*/
+/*<$dynamic if @useBaseColorMap>*/
 {
     float4 value = baseColorMap(...);
     color.rgb *= value.rgb;
-    /*<$instance if @useBaseColorAlpha>*/
+    /*<$dynamic if @useBaseColorAlpha>*/
     color.a *= value.a;
-    /*<$instance endif>*/
+    /*<$dynamic endif>*/
 }
-/*<$instance endif>*/
-/*<$instance if @isRaster && @useShadow>*/
+/*<$dynamic endif>*/
+/*<$dynamic if @isRaster && @useShadow>*/
 {
     color *= shadow(...);   
 }
-/*<$instance endif>*/
+/*<$dynamic endif>*/
 )";
 
     pps::PPS lang;

@@ -7,11 +7,10 @@ int main()
 {
     std::string input = "(@isRaster && @useShadow) || (!@hasSun && @isDay)";
 
-    std::unordered_map<std::string, bool> variables = {
-        {"@isRaster", false},
-        {"@useShadow", true},
-        {"@hasSun", true},
-        {"@isDay", true},
+    std::unordered_map<std::string, std::string> instances = {
+        {"@isRaster", "Render.isRaster"},
+        {"@useShadow", "scene.useShow"},
+        {"@hasSun", "scene.hasSun"},
     };
 
     pps::Lexer lexer(input);
@@ -20,7 +19,7 @@ int main()
     pps::Parser parser(tokens);
     auto        expr = parser.parse();
 
-    pps::ExprSimplifier simplifier(variables);
+    pps::ExprSimplifier simplifier(instances);
     auto                simplifiedExpr = simplifier.simplify(expr.get());
 
     pps::ExprGenerator generator;
