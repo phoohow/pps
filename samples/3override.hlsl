@@ -1,7 +1,7 @@
-SamplerState s_LinearWrap : register(s0 /*<$overide @sLinearWrap>*/);
-SamplerState s_LinearClamp : register(s1 /*<$overide @sLinearClamp>*/);
+SamplerState s_LinearWrap : register(s0 /*<$override @sLinearWrap>*/);
+SamplerState s_LinearClamp : register(s1 /*<$override @sLinearClamp>*/);
 /*<$static if @hasOcclusion>*/
-Texture2D t_Occlusion : register(t0 /*<$overide @tOcclusion>*/);
+Texture2D t_Occlusion : register(t0 /*<$override @tOcclusion>*/);
 /*<$static endif>*/
 
 void main(out float4 /*<$override @type>*/ color)

@@ -347,8 +347,8 @@ void Task::processOverride(std::string& origin, std::string& expr)
     if (isSkip())
         return;
 
-    auto iter = m_context->instances.find(expr);
-    if (iter == m_context->instances.end())
+    auto iter = m_context->strings.find(expr);
+    if (iter == m_context->strings.end())
     {
         std::cerr << "Fail to find " << expr << " in context." << std::endl;
         expr = "";

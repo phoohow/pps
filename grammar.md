@@ -286,7 +286,7 @@ elif @quality == 1
 else
     @quality = 2;
 endif
-`
+```
 
 ### Loop Statement(not supported yet)
 
@@ -296,18 +296,29 @@ PPS programs consist of tasks that define transformations to be applied to sourc
 
 ### Branch Task
 
-Conditional compilation based on boolean expressions.
+Conditional compilation based on boolean expressions. Branch tasks can be either static or dynamic:
+
+- **Static branches** (`static`) are evaluated at compile time and completely removed from the output if the condition is false
+- **Dynamic branches** (`dynamic`) are evaluated at runtime and converted to actual HLSL conditional statements
 
 Syntax:
+``` 
+/*<$static if expression>*/
+    ...code...
+/*<$static elif expression>*/
+    ...code...
+/*<$static else>*/
+    ...code...
+/*<$static endif>*/
+
+/*<$dynamic if expression>*/
+    ...code...
+/*<$dynamic elif expression>*/
+    ...code...
+/*<$dynamic else>*/
+    ...code...
+/*<$dynamic endif>*/
 ```
-/*<$branch if expression>*/
-    ...code...
-/*<$branch elif expression>*/
-    ...code...
-/*<$branch else>*/
-    ...code...
-/*<$branch endif>*/
-`
 
 Variants:
 1. `if` ... `endif`
@@ -317,25 +328,41 @@ Variants:
 
 Example:
 ```
-/*<$branch if @hasBaseColorMap>*/
+/*<$dynamic if @hasBaseColorMap>*/
 {
     float4 value = texture(baseColorMap, uv);
     color.rgb *= value.rgb;
 
-    /*<$branch if @useBaseColorMapAlpha>*/
+    /*<$static if @useBaseColorMapAlpha>*/
     color.a *= value.a;
-    /*<$branch else>*/
+    /*<$static else>*/
     color.a *= 0.5;
-    /*<$branch endif>*/
+    /*<$static endif>*/
 }
-/*<$branch endif>*/
+/*<$dynamic endif>*/
+
+/*<$dynamic if @isRaster && @useShadow>*/
+{
+    float shadow = PCSS(...);
+    color.rgb *= shadow;
+}
+/*<$dynamic elif @isRayTracing>*/
+{
+    float shadow = RayShow(...);
+    color.rgb *= shadow;
+}
+/*<$dynamic else>*/
+{
+    color.rgb *= 0.9f;
+}
+/*<$dynamic endif>*/
 ```
 
 See [branch](samples/1branch.hlsl)
 
 ### Include Task
 
-Includes external files.
+Includes external files. The include path is resolved using the prefix paths specified in the context.
 
 Syntax:
 ```
@@ -344,16 +371,16 @@ Syntax:
 
 Example:
 ```
-/*<$branch if @useBasic>*/
+/*<$static if @useBasic>*/
 /*<$include util/basic.hlsl>*/
-/*<$branch endif>*/
+/*<$static endif>*/
 ```
 
 See [include](samples/2include.hlsl)
 
 ### Override Task
 
-Replaces content at a specific location.
+Replaces content at a specific location. The override variable must be defined in the context's string variables.
 
 Syntax:
 ```
@@ -370,7 +397,7 @@ See [override](samples/3override.hlsl)
 
 ### Embed Task
 
-Defines and inserts code blocks.
+Defines and inserts code blocks. The embed task allows you to define code blocks that can be inserted at specific locations.
 
 Syntax:
 ```
@@ -383,16 +410,16 @@ Syntax:
 
 Example:
 ```
-/*<$branch if @hasEmbedAO>*/
+/*<$static if @hasEmbedAO>*/
 /*<$embed @embedAO>*/
-/*<$branch endif>*/
+/*<$static endif>*/
 
 void main(out float4 color)
 {
     float ao = 1.0f;
-    /*<$branch if @hasEmbedAO>*/
+    /*<$static if @hasEmbedAO>*/
     /*<$embed #embedAO>*/;
-    /*<$branch endif>*/
+    /*<$static endif>*/
 
     color *= ao;
 }
@@ -402,7 +429,7 @@ See [embed](samples/4embed.hlsl)
 
 ### Prog Task
 
-Executes procedural code for complex logic.
+Executes procedural code for complex logic. Prog tasks allow you to define variables, perform conditional logic, and export values for use in other parts of the code.
 
 Syntax:
 ```

@@ -12,10 +12,15 @@ We provide two modes: dynamic and static.
 
 ### Tasks
 1. Branch: Extends HLSL's conditional compilation concept, enabling conditional expression simplification for more flexible code generation in both dynamic and static modes.
+   - Supports both static and dynamic modes with different syntax (`/*<$static if condition>*/` and `/*<$dynamic if condition>*/`)
 2. Include: Directly corresponds to HLSL's include functionality, maintaining identical behavior.
+   - Syntax: `/*<$include path>*/`
 3. Override: A new concept for dynamically modifying source code.
+   - Syntax: `/*<$override variable>*/`
 4. Embed: A new concept enabling dynamic code embedding to extend source code logic.
+   - Syntax: `/*<$embed variable>*/`
 5. Prog: An independent language that enables complex logic execution and deeper interaction with source code.
+   - Syntax: `/*<$prog command>*/`
 
 ## Grammar
 
@@ -60,10 +65,10 @@ pps [task] [mode] [options] <input_file.hlsl>
 - `--dynamic` - Dynamic mode
 
 ### Options
-- `--db <key=value>` - Define boolean variable (stored in defineCtx)
-- `--di <key=value>` - Define integer variable (stored in defineCtx)
-- `--ds <key=value>` - Define string variable (stored in defineCtx)
-- `--r <key=value>` - Define replaceCtx variable
+- `--db <key=value>` - Define boolean variable
+- `--di <key=value>` - Define integer variable
+- `--ds <key=value>` - Define string variable
+- `--r <key=value>` - Define instance variable (for dynamic mode)
 - `--i <path>` - Add include path
 - `--input <path>` - Specify input file
 - `--output <path>` - Specify output file
@@ -79,11 +84,17 @@ pps source.hlsl
 pps --dynamic source.hlsl
 
 # Process a file with evaluation task and custom variables
-pps --evaluate --db DEBUG=true --di VERBOSE=true --ds DEFAULT_COLOR="float3(1, 0, 0)" source.hlsl
+pps --evaluate --db DEBUG=true --di VERBOSE=1 --ds DEFAULT_COLOR="float3(1, 0, 0)" source.hlsl
+
+# Process a file with instance variables for dynamic mode
+pps --dynamic --db useBaseColorMap=true --r useBaseColorMap=mat.useBaseColorMap source.hlsl
 
 # Process a file with custom include path
 pps --i ./includes source.hlsl
 
 # Process a file with explicit input and output paths
 pps --input source.hlsl --output result.hlsl
+
+# Process a file with multiple context variables
+pps --db hasNormalMap=true --db hasSpecularMap=false --di qualityLevel=2 --ds shaderModel="5_0" source.hlsl
 ```

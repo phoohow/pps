@@ -11,12 +11,14 @@ int main()
         {"@isRaster", true},
         {"@useShadow", false},
     };
+    ctx.strings = {
+        {"@sLinearWrap", "s10"},
+        {"@sLinearClamp", "s20"},
+    };
     ctx.instances = {
         {"@useBaseColorMap", "mat.useBaseColorMap"},
         {"@useBaseColorAlpha", "mat.useBaseColorAlpha"},
         {"@useShadow", "scene.useShadow"},
-        {"@sLinearWrap", "s10"},
-        {"@sLinearClamp", "s20"},
     };
 
     std::string line = R"(
