@@ -16,7 +16,6 @@ target("libpps", function()
     add_includedirs("src/include")
     
     add_deps("libsbin")
-    add_deps("aclg")
     
     add_files("src/*.cpp", "src/frontend/*.cpp", "src/pipeline/*.cpp")
     
