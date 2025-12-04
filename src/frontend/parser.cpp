@@ -1,5 +1,7 @@
 #include <frontend/parser.h>
 
+#include <aclg/aclg.h>
+
 #include <iostream>
 #include <stdexcept>
 
@@ -51,10 +53,11 @@ std::unique_ptr<Node> Parser::parse_statement()
     }
     else if (match(TokenType::tEOF))
     {
+        ACLG_ERROR("Empty statement");
         return nullptr;
     }
 
-    throw std::runtime_error("Unknown statement type");
+    ACLG_ERROR("Unknown statement type");
     return nullptr;
 }
 
@@ -218,14 +221,15 @@ std::unique_ptr<Node> Parser::primary()
         auto node = op_logicalOr();
         if (!match(TokenType::tOp_Rparen))
         {
-            throw std::runtime_error("Expected ')'");
+            ACLG_ERROR("Expected ')'");
         }
         consume();
         return node;
     }
     else
     {
-        throw std::runtime_error("Unexpected token in primary");
+        ACLG_ERROR("Unexpected token in primary");
+        return nullptr;
     }
 }
 
@@ -283,7 +287,7 @@ std::unique_ptr<Node> Parser::stmt_condition()
         consume();
 
     if (!match(TokenType::tCondition_endif))
-        throw std::runtime_error("Expected 'endif'");
+        ACLG_ERROR("Expected 'endif'");
     consume();
 
     return std::make_unique<StmtConditionNode>(std::move(branches), std::move(elseBlock));

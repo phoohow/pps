@@ -1,5 +1,7 @@
 #include <pipeline/generator.h>
 
+#include <aclg/aclg.h>
+
 namespace pps
 {
 
@@ -20,6 +22,7 @@ std::string ExprGenerator::generate(const Node* node)
             return generateUnaryOpNode(static_cast<const UnaryOpNode*>(node));
 
         default:
+            ACLG_ERROR("Unknown node type");
             return "";
     }
 }
@@ -39,6 +42,7 @@ std::string ExprGenerator::generateBinaryOpNode(const BinaryOpNode* node)
     if (node->op.type == TokenType::tOp_or)
         return "(" + left + " || " + right + ")";
 
+    ACLG_WARN("operator: {} is not supported", node->op.value);
     return "";
 }
 
@@ -49,6 +53,7 @@ std::string ExprGenerator::generateUnaryOpNode(const UnaryOpNode* node)
     if (node->op.type == TokenType::tOp_not)
         return "(!" + child + ")";
 
+    ACLG_WARN("operator: {} is not supported", node->op.value);
     return "";
 }
 

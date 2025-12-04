@@ -2,6 +2,10 @@
 
 #include <pps/pps.h>
 
+#include <magic_enum/magic_enum.hpp>
+
+#include <aclg/aclg.h>
+
 #include <stdexcept>
 #include <iostream>
 
@@ -185,7 +189,8 @@ std::unique_ptr<Value> Evaluator::visit(const Node* node)
         case NodeType::tStmt_compound:
             return visitStmtCompound(static_cast<const StmtCompoundNode*>(node));
         default:
-            throw std::runtime_error("Unknown node type");
+            ACLG_ERROR("Unknown node type");
+            return nullptr;
     }
 }
 
@@ -236,7 +241,6 @@ std::unique_ptr<Value> Evaluator::visitBinaryOp(const BinaryOpNode* node)
             case TokenType::tOp_unequal:
                 return std::make_unique<BoolValue>(leftInt != rightInt);
         }
-        throw std::runtime_error("Unknown binary operator: " + node->op.value);
     }
     else if (left->type == ValueType::tBool)
     {
@@ -250,7 +254,6 @@ std::unique_ptr<Value> Evaluator::visitBinaryOp(const BinaryOpNode* node)
             case TokenType::tOp_or:
                 return std::make_unique<BoolValue>(leftBool || rightBool);
         }
-        throw std::runtime_error("Unknown binary operator: " + node->op.value);
     }
     else if (left->type == ValueType::tString)
     {
@@ -278,9 +281,9 @@ std::unique_ptr<Value> Evaluator::visitBinaryOp(const BinaryOpNode* node)
                 if (right->type == ValueType::tInt)
                     return std::make_unique<StringValue>(leftString >> static_cast<const IntValue&>(*right));
         }
-        throw std::runtime_error("Unknown binary operator: " + node->op.value);
     }
 
+    ACLG_ERROR("Unknown binary operator: {}", node->op.value);
     return nullptr;
 }
 
@@ -289,7 +292,9 @@ std::unique_ptr<Value> Evaluator::visitUnaryOp(const UnaryOpNode* node)
     auto val = visit(node->child.get());
     if (node->op.type == TokenType::tOp_not)
         return std::make_unique<BoolValue>(!val);
-    throw std::runtime_error("Unknown unary operator: " + node->op.value);
+
+    ACLG_ERROR("Unknown unary operator: {}", node->op.value);
+    return nullptr;
 }
 
 std::unique_ptr<Value> Evaluator::visitVariable(const VariableNode* node)
@@ -320,7 +325,7 @@ std::unique_ptr<Value> Evaluator::visitVariable(const VariableNode* node)
             return std::make_unique<StringValue>(iter->second);
     }
 
-    std::cout << "Undefined variable: " + node->name << std::endl;
+    ACLG_ERROR("Undefined variable: {}, type: {}", node->name, magic_enum::enum_name(node->type()));
     return std::make_unique<IntValue>(0);
 }
 
@@ -355,7 +360,8 @@ std::unique_ptr<Value> Evaluator::visitStmtDeclaration(const StmtDeclarationNode
             m_stringVars[node->varName] = std::get<std::string>(value->value);
             break;
         default:
-            throw std::runtime_error("Invalid variable type: " + node->varType.value);
+            ACLG_ERROR("Invalid variable type: {}", node->varType.value);
+            break;
     }
 
     return value;
@@ -379,7 +385,7 @@ std::unique_ptr<Value> Evaluator::visitStmtAssignment(const StmtAssignmentNode* 
     }
     else
     {
-        throw std::runtime_error("Undefined variable: " + node->name);
+        ACLG_ERROR("Undefined variable: {}, type: {}", node->name, magic_enum::enum_name(node->type()));
     }
 
     return value;

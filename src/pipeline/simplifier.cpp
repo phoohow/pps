@@ -1,5 +1,7 @@
 #include <pipeline/simplifier.h>
 
+#include <aclg/aclg.h>
+
 namespace pps
 {
 ExprSimplifier::ExprSimplifier(const std::unordered_map<std::string, std::string>& instances) :
@@ -27,6 +29,7 @@ std::unique_ptr<Node> ExprSimplifier::simplifyNode(const Node* node)
             return simplifyUnaryOpNode(static_cast<const UnaryOpNode*>(node));
 
         default:
+            ACLG_ERROR("Unknown node type");
             return std::unique_ptr<Node>(const_cast<Node*>(node));
     }
 }

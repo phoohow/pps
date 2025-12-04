@@ -1,11 +1,13 @@
+#include <pps/pps.h>
+
+#include <aclg/aclg.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <filesystem>
-
-#include <pps/pps.h>
 
 namespace fs = std::filesystem;
 
@@ -112,7 +114,7 @@ int main(int argc, char* argv[])
                 }
                 catch (...)
                 {
-                    std::cerr << "Error: Invalid integer value for --di option." << std::endl;
+                    ACLG_ERROR("Invalid integer value for --di option.");
                     return 1;
                 }
             }
@@ -184,7 +186,7 @@ int main(int argc, char* argv[])
             // Check if we have an input source
             if (inputSource.empty())
             {
-                std::cerr << "Error: No input source specified" << std::endl;
+                ACLG_ERROR("No input source specified.");
                 showUsage();
                 return 1;
             }
@@ -193,7 +195,7 @@ int main(int argc, char* argv[])
             std::ifstream file(inputSource);
             if (!file.is_open())
             {
-                std::cerr << "Error: Could not open file " << inputSource << std::endl;
+                ACLG_ERROR("Could not open file {}.", inputSource);
                 return 1;
             }
 
@@ -221,7 +223,7 @@ int main(int argc, char* argv[])
                 std::ofstream outFile(outputPath);
                 if (!outFile.is_open())
                 {
-                    std::cerr << "Error: Could not open output file " << outputPath << std::endl;
+                    ACLG_ERROR("Could not open output file {}.", outputPath);
                     return 1;
                 }
                 outFile << result;
@@ -230,7 +232,7 @@ int main(int argc, char* argv[])
             else
             {
                 // Output result to stdout
-                std::cout << result << std::endl;
+                ACLG_INFO("Succeed: {}", result);
             }
 
             return 0;

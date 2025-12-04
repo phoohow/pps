@@ -4,6 +4,8 @@
 
 #include <sbin/loader.h>
 
+#include <aclg/aclg.h>
+
 #include <regex>
 #include <fstream>
 #include <iostream>
@@ -333,11 +335,17 @@ std::string Task::extractIncludeFromCTX(const std::string& path)
 std::string Task::extractIncludeFromLoader(const std::string& path)
 {
     if (m_loader == nullptr)
+    {
+        ACLG_WARN("Loader is not set.");
         return "";
+    }
 
     auto data = m_loader->getShader(path, m_decryptionKey);
     if (data == nullptr)
+    {
+        ACLG_ERROR("Fail to load {} from loader.", path);
         return "";
+    }
 
     return std::string(data->data.begin(), data->data.end());
 }
@@ -350,7 +358,7 @@ void Task::processOverride(std::string& origin, std::string& expr)
     auto iter = m_context->strings.find(expr);
     if (iter == m_context->strings.end())
     {
-        std::cerr << "Fail to find " << expr << " in context." << std::endl;
+        ACLG_ERROR("Fail to find {} in context.", expr);
         expr = "";
         return;
     }

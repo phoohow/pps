@@ -2,6 +2,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include <aclg/aclg.h>
+
 #include <iostream>
 #include <cctype>
 
@@ -259,8 +261,11 @@ Token Lexer::next()
 
             default:
             {
+                ACLG_ERROR("Unknown token: {} in position {}", m_currentChar, m_pos);
             }
         }
+
+        ACLG_ERROR("Unknown token: {} in position {}", m_currentChar, m_pos);
         return Token(TokenType::tError, std::string(1, m_currentChar));
     }
 
@@ -299,7 +304,10 @@ Token Lexer::literal_int()
         if (m_currentChar == '.')
         {
             if (hasDecimal)
+            {
+                ACLG_ERROR("Invalid number: multiple decimal points");
                 throw std::runtime_error("Invalid number: multiple decimal points");
+            }
             hasDecimal = true;
         }
         result += m_currentChar;
@@ -319,7 +327,11 @@ Token Lexer::literal_string()
         advance();
     }
     if (m_currentChar != '"')
+    {
+        ACLG_ERROR("Unterminated string literal");
         throw std::runtime_error("Unterminated string literal");
+    }
+
     advance();
     return Token(TokenType::tLit_string, result);
 }

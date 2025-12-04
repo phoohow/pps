@@ -1,10 +1,10 @@
 set_languages("c++20")
-
 add_rules("mode.debug", "mode.release")
+
 add_includedirs("ext/magic_enum/include")
 includes("ext/sbin")
 
-option("test_pps", function()
+option("enable_pps_test", function()
     set_default(false)
     set_showmenu(true)
     set_description("Enable unit tests for PPS")
@@ -16,6 +16,8 @@ target("libpps", function()
     add_includedirs("src/include")
     
     add_deps("libsbin")
+    add_deps("aclg")
+    
     add_files("src/*.cpp", "src/frontend/*.cpp", "src/pipeline/*.cpp")
     
     add_defines("PPS_EXPORT_DLL")
@@ -36,6 +38,8 @@ function add_test_target(name, need_pps, files)
         
         if need_pps then
             add_deps("libpps")
+        else
+            add_deps("aclg")
         end
         
         for _, file in ipairs(files) do
@@ -44,16 +48,16 @@ function add_test_target(name, need_pps, files)
     end)
 end
 
-if has_config("test_pps") then
-    add_test_target("TestLexer", false, {"src/frontend/lexer.cpp", "test/testLexer.cpp"})
-    add_test_target("TestParser", false, {"src/frontend/*.cpp", "test/testParser.cpp"})
-    add_test_target("TestEvaluator", false, {"src/frontend/*.cpp", "src/pipeline/*.cpp", "test/testEvaluator.cpp"})
-    add_test_target("TestSimplifier", false, {"src/frontend/*.cpp", "src/pipeline/*.cpp", "test/testSimplifier.cpp"})
-    add_test_target("TestGenerator", false, {"src/frontend/*.cpp", "src/pipeline/*.cpp", "test/testGenerator.cpp"})
-    add_test_target("TestTaskBranch", true, {"test/testTaskBranch.cpp"})
-    add_test_target("TestTaskOverride", true, {"test/testTaskOverride.cpp"})
+if has_config("enable_pps_test") then
+    add_test_target("pps_lexer", false, {"src/frontend/lexer.cpp", "samples/pps_lexer.cpp"})
+    add_test_target("pps_parser", false, {"src/frontend/*.cpp", "samples/pps_parser.cpp"})
+    add_test_target("pps_evaluator", false, {"src/frontend/*.cpp", "src/pipeline/*.cpp", "samples/pps_evaluator.cpp"})
+    add_test_target("pps_simplifier", false, {"src/frontend/*.cpp", "src/pipeline/*.cpp", "samples/pps_simplifier.cpp"})
+    add_test_target("pps_generator", false, {"src/frontend/*.cpp", "src/pipeline/*.cpp", "samples/pps_generator.cpp"})
+    add_test_target("pps_task_branch", true, {"samples/pps_task_branch.cpp"})
+    add_test_target("pps_task_override", true, {"samples/pps_task_override.cpp"})
     
-    target("TestTaskInclude", function()
+    target("pps_task_include", function()
         set_kind("binary")
         add_deps("libpps")
         
@@ -63,6 +67,6 @@ if has_config("test_pps") then
         
         add_defines("SOURCE_DIR=\"" .. current_dir .. "\"")
         add_includedirs("src/include")
-        add_files("test/testTaskInclude.cpp")
+        add_files("samples/pps_task_include.cpp")
     end)
 end
