@@ -340,7 +340,7 @@ std::string Task::extractIncludeFromLoader(const std::string& path)
         return "";
     }
 
-    auto data = m_loader->getShader(path, m_decryptionKey);
+    auto data = m_loader->get_shader(path, m_decryptionKey);
     if (data == nullptr)
     {
         ACLG_ERROR("Fail to load {} from loader.", path);
