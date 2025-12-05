@@ -290,8 +290,10 @@ void Task::_process_include(std::string& path)
     std::string        out;
     std::istringstream iss(content);
     std::string        line;
+    uint32_t           line_number = 0;
     while (std::getline(iss, line))
     {
+        line_number++;
         process(line);
 
         if (line.empty())
@@ -394,10 +396,8 @@ Task::Type Task::_extract_task(std::string& line)
     }
     if (std::regex_search(task, match_type, g_task_dynamic))
     {
-        if (m_context->isStatic) return Type::tMacro;
-
         line = match_type[1].str();
-        return Type::tInstance;
+        return m_context->isStatic ? Type::tMacro : Type::tInstance;
     }
     else if (std::regex_search(task, match_type, g_task_include))
     {
