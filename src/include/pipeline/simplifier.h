@@ -17,11 +17,11 @@ public:
     std::unique_ptr<Node> simplify(const Node* node);
 
 private:
-    std::unique_ptr<Node> simplifyNode(const Node* node);
+    std::unique_ptr<Node> _simplify_node(const Node* node);
 
-    std::unique_ptr<Node> simplifyVariableNode(const VariableNode* node);
-    std::unique_ptr<Node> simplifyBinaryOpNode(const BinaryOpNode* node);
-    std::unique_ptr<Node> simplifyUnaryOpNode(const UnaryOpNode* node);
+    std::unique_ptr<Node> _simplify_variable_node(const VariableNode* node);
+    std::unique_ptr<Node> _simplify_binary_op_node(const BinaryOpNode* node);
+    std::unique_ptr<Node> _simplify_unary_op_node(const UnaryOpNode* node);
 };
 
 } // namespace pps

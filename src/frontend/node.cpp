@@ -50,10 +50,10 @@ void LitStringNode::print(int depth) const
 }
 
 StmtDeclarationNode::StmtDeclarationNode(const Token& _varType, const std::string& _varName, std::unique_ptr<Node> _value) :
-    varType(_varType), varName(_varName), value(std::move(_value)) {}
+    var_type(_varType), name(_varName), value(std::move(_value)) {}
 void StmtDeclarationNode::print(int depth) const
 {
-    std::cout << std::string(depth * 2, ' ') << "Declaration: " << varType.value << " " << varName << "\n";
+    std::cout << std::string(depth * 2, ' ') << "Declaration: " << var_type.value << " " << name << "\n";
     if (value)
         value->print(depth + 1);
 }
@@ -74,8 +74,8 @@ void StmtExpressionNode::print(int depth) const
     value->print(depth + 1);
 }
 
-StmtConditionNode::StmtConditionNode(std::vector<ConditionBlock> branches, std::unique_ptr<Node> elseBlock) :
-    branches(std::move(branches)), elseBlock(std::move(elseBlock)) {}
+StmtConditionNode::StmtConditionNode(std::vector<ConditionBlock> branches, std::unique_ptr<Node> else_block) :
+    branches(std::move(branches)), else_block(std::move(else_block)) {}
 void StmtConditionNode::print(int depth) const
 {
     for (const auto& branch : branches)
@@ -85,10 +85,10 @@ void StmtConditionNode::print(int depth) const
         std::cout << std::string(depth * 2, ' ') << "Then:\n";
         branch.block->print(depth + 1);
     }
-    if (elseBlock)
+    if (else_block)
     {
         std::cout << std::string(depth * 2, ' ') << "Else:\n";
-        elseBlock->print(depth + 1);
+        else_block->print(depth + 1);
     }
 }
 

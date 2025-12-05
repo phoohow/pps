@@ -155,49 +155,49 @@ BoolValue StringValue::operator!=(const StringValue& other) const
 }
 
 Evaluator::Evaluator(std::unordered_map<std::string, bool>* b, std::unordered_map<std::string, int>* i, std::unordered_map<std::string, std::string>* s) :
-    m_iBools(b), m_iInts(i), m_iStrings(s) {}
+    m_in_bools(b), m_in_ints(i), m_in_strs(s) {}
 
 std::unique_ptr<Value> Evaluator::evaluate(const Node* node)
 {
-    return visit(node);
+    return _visit(node);
 }
 
-std::unique_ptr<Value> Evaluator::visit(const Node* node)
+std::unique_ptr<Value> Evaluator::_visit(const Node* node)
 {
     if (!node) return std::make_unique<NullValue>();
 
     switch (node->type())
     {
         case NodeType::tLit_int:
-            return visitLitInt(static_cast<const LitIntNode*>(node));
+            return _visit_lit_int(static_cast<const LitIntNode*>(node));
         case NodeType::tLit_bool:
-            return visitLitBool(static_cast<const LitBoolNode*>(node));
+            return _visit_lit_bool(static_cast<const LitBoolNode*>(node));
         case NodeType::tLit_string:
-            return visitLitString(static_cast<const LitStringNode*>(node));
+            return _visit_lit_str(static_cast<const LitStringNode*>(node));
         case NodeType::tVariable:
-            return visitVariable(static_cast<const VariableNode*>(node));
+            return _visit_variable(static_cast<const VariableNode*>(node));
         case NodeType::tOp_binary:
-            return visitBinaryOp(static_cast<const BinaryOpNode*>(node));
+            return _visit_binary_op(static_cast<const BinaryOpNode*>(node));
         case NodeType::tOp_unary:
-            return visitUnaryOp(static_cast<const UnaryOpNode*>(node));
+            return _visit_unary_op(static_cast<const UnaryOpNode*>(node));
         case NodeType::tStmt_declaration:
-            return visitStmtDeclaration(static_cast<const StmtDeclarationNode*>(node));
+            return _visit_stmt_declaration(static_cast<const StmtDeclarationNode*>(node));
         case NodeType::tStmt_assignment:
-            return visitStmtAssignment(static_cast<const StmtAssignmentNode*>(node));
+            return _visit_stmt_assignment(static_cast<const StmtAssignmentNode*>(node));
         case NodeType::tStmt_condition:
-            return visitStmtCondition(static_cast<const StmtConditionNode*>(node));
+            return _visit_stmt_condition(static_cast<const StmtConditionNode*>(node));
         case NodeType::tStmt_compound:
-            return visitStmtCompound(static_cast<const StmtCompoundNode*>(node));
+            return _visit_stmt_compound(static_cast<const StmtCompoundNode*>(node));
         default:
             ACLG_ERROR("Unknown node type");
             return nullptr;
     }
 }
 
-std::unique_ptr<Value> Evaluator::visitBinaryOp(const BinaryOpNode* node)
+std::unique_ptr<Value> Evaluator::_visit_binary_op(const BinaryOpNode* node)
 {
-    auto left  = visit(node->left.get());
-    auto right = visit(node->right.get());
+    auto left  = _visit(node->left.get());
+    auto right = _visit(node->right.get());
 
     if (left->type == ValueType::tInt)
     {
@@ -244,42 +244,42 @@ std::unique_ptr<Value> Evaluator::visitBinaryOp(const BinaryOpNode* node)
     }
     else if (left->type == ValueType::tBool)
     {
-        const BoolValue& leftBool  = static_cast<const BoolValue&>(*left);
-        const BoolValue& rightBool = static_cast<const BoolValue&>(*right);
+        const BoolValue& left_bool  = static_cast<const BoolValue&>(*left);
+        const BoolValue& right_bool = static_cast<const BoolValue&>(*right);
 
         switch (node->op.type)
         {
             case TokenType::tOp_and:
-                return std::make_unique<BoolValue>(leftBool && rightBool);
+                return std::make_unique<BoolValue>(left_bool && right_bool);
             case TokenType::tOp_or:
-                return std::make_unique<BoolValue>(leftBool || rightBool);
+                return std::make_unique<BoolValue>(left_bool || right_bool);
         }
     }
     else if (left->type == ValueType::tString)
     {
-        const StringValue& leftString = static_cast<const StringValue&>(*left);
+        const StringValue& left_str = static_cast<const StringValue&>(*left);
 
         switch (node->op.type)
         {
             case TokenType::tOp_add:
                 if (right->type == ValueType::tString)
-                    return std::make_unique<StringValue>(leftString + static_cast<const StringValue&>(*right));
+                    return std::make_unique<StringValue>(left_str + static_cast<const StringValue&>(*right));
                 else if (right->type == ValueType::tInt)
-                    return std::make_unique<StringValue>(leftString + static_cast<const IntValue&>(*right));
+                    return std::make_unique<StringValue>(left_str + static_cast<const IntValue&>(*right));
             case TokenType::tOp_sub:
                 if (right->type == ValueType::tString)
-                    return std::make_unique<StringValue>(leftString - static_cast<const StringValue&>(*right));
+                    return std::make_unique<StringValue>(left_str - static_cast<const StringValue&>(*right));
                 else if (right->type == ValueType::tString)
-                    return std::make_unique<StringValue>(leftString - static_cast<const StringValue&>(*right));
+                    return std::make_unique<StringValue>(left_str - static_cast<const StringValue&>(*right));
             case TokenType::tOp_mul:
                 if (right->type == ValueType::tInt)
-                    return std::make_unique<StringValue>(leftString * static_cast<const IntValue&>(*right));
+                    return std::make_unique<StringValue>(left_str * static_cast<const IntValue&>(*right));
             case TokenType::tOp_bitLMove:
                 if (right->type == ValueType::tInt)
-                    return std::make_unique<StringValue>(leftString << static_cast<const IntValue&>(*right));
+                    return std::make_unique<StringValue>(left_str << static_cast<const IntValue&>(*right));
             case TokenType::tOp_bitRMove:
                 if (right->type == ValueType::tInt)
-                    return std::make_unique<StringValue>(leftString >> static_cast<const IntValue&>(*right));
+                    return std::make_unique<StringValue>(left_str >> static_cast<const IntValue&>(*right));
         }
     }
 
@@ -287,9 +287,9 @@ std::unique_ptr<Value> Evaluator::visitBinaryOp(const BinaryOpNode* node)
     return nullptr;
 }
 
-std::unique_ptr<Value> Evaluator::visitUnaryOp(const UnaryOpNode* node)
+std::unique_ptr<Value> Evaluator::_visit_unary_op(const UnaryOpNode* node)
 {
-    auto val = visit(node->child.get());
+    auto val = _visit(node->child.get());
     if (node->op.type == TokenType::tOp_not)
         return std::make_unique<BoolValue>(!val);
 
@@ -297,31 +297,31 @@ std::unique_ptr<Value> Evaluator::visitUnaryOp(const UnaryOpNode* node)
     return nullptr;
 }
 
-std::unique_ptr<Value> Evaluator::visitVariable(const VariableNode* node)
+std::unique_ptr<Value> Evaluator::_visit_variable(const VariableNode* node)
 {
-    if (m_intVars.find(node->name) != m_intVars.end())
-        return std::make_unique<IntValue>(m_intVars[node->name]);
-    else if (m_boolVars.find(node->name) != m_boolVars.end())
-        return std::make_unique<BoolValue>(m_boolVars[node->name]);
-    else if (m_stringVars.find(node->name) != m_stringVars.end())
-        return std::make_unique<StringValue>(m_stringVars[node->name]);
+    if (m_var_ints.find(node->name) != m_var_ints.end())
+        return std::make_unique<IntValue>(m_var_ints[node->name]);
+    else if (m_var_bools.find(node->name) != m_var_bools.end())
+        return std::make_unique<BoolValue>(m_var_bools[node->name]);
+    else if (m_var_strs.find(node->name) != m_var_strs.end())
+        return std::make_unique<StringValue>(m_var_strs[node->name]);
 
-    if (m_iBools)
+    if (m_in_bools)
     {
-        auto iter = m_iBools->find(node->name);
-        if (iter != m_iBools->end())
+        auto iter = m_in_bools->find(node->name);
+        if (iter != m_in_bools->end())
             return std::make_unique<BoolValue>(iter->second);
     }
-    if (m_iInts)
+    if (m_in_ints)
     {
-        auto iter = m_iInts->find(node->name);
-        if (iter != m_iInts->end())
+        auto iter = m_in_ints->find(node->name);
+        if (iter != m_in_ints->end())
             return std::make_unique<IntValue>(iter->second);
     }
-    if (m_iStrings)
+    if (m_in_strs)
     {
-        auto iter = m_iStrings->find(node->name);
-        if (iter != m_iStrings->end())
+        auto iter = m_in_strs->find(node->name);
+        if (iter != m_in_strs->end())
             return std::make_unique<StringValue>(iter->second);
     }
 
@@ -329,59 +329,58 @@ std::unique_ptr<Value> Evaluator::visitVariable(const VariableNode* node)
     return std::make_unique<IntValue>(0);
 }
 
-std::unique_ptr<Value> Evaluator::visitLitInt(const LitIntNode* node)
+std::unique_ptr<Value> Evaluator::_visit_lit_int(const LitIntNode* node)
 {
     return std::make_unique<IntValue>(node->value);
 }
 
-std::unique_ptr<Value> Evaluator::visitLitBool(const LitBoolNode* node)
+std::unique_ptr<Value> Evaluator::_visit_lit_bool(const LitBoolNode* node)
 {
     return std::make_unique<BoolValue>(node->value);
 }
 
-std::unique_ptr<Value> Evaluator::visitLitString(const LitStringNode* node)
+std::unique_ptr<Value> Evaluator::_visit_lit_str(const LitStringNode* node)
 {
     return std::make_unique<StringValue>(node->value);
 }
 
-std::unique_ptr<Value> Evaluator::visitStmtDeclaration(const StmtDeclarationNode* node)
+std::unique_ptr<Value> Evaluator::_visit_stmt_declaration(const StmtDeclarationNode* node)
 {
-    auto valueNode = node->value.get();
-    auto value     = evaluate(valueNode);
-    switch (node->varType.type)
+    auto value = evaluate(node->value.get());
+    switch (node->var_type.type)
     {
         case TokenType::tType_int:
-            m_intVars[node->varName] = std::get<int>(value->value);
+            m_var_ints[node->name] = std::get<int>(value->value);
             break;
         case TokenType::tType_bool:
-            m_boolVars[node->varName] = std::get<bool>(value->value);
+            m_var_bools[node->name] = std::get<bool>(value->value);
             break;
         case TokenType::tType_string:
-            m_stringVars[node->varName] = std::get<std::string>(value->value);
+            m_var_strs[node->name] = std::get<std::string>(value->value);
             break;
         default:
-            ACLG_ERROR("Invalid variable type: {}", node->varType.value);
+            ACLG_ERROR("Invalid variable type: {}", node->var_type.value);
             break;
     }
 
     return value;
 }
 
-std::unique_ptr<Value> Evaluator::visitStmtAssignment(const StmtAssignmentNode* node)
+std::unique_ptr<Value> Evaluator::_visit_stmt_assignment(const StmtAssignmentNode* node)
 {
     std::unique_ptr<Value> value = evaluate(node->value.get());
 
-    if (m_intVars.find(node->name) != m_intVars.end())
+    if (m_var_ints.find(node->name) != m_var_ints.end())
     {
-        m_intVars[node->name] = std::get<int>(value->value);
+        m_var_ints[node->name] = std::get<int>(value->value);
     }
-    else if (m_boolVars.find(node->name) != m_boolVars.end())
+    else if (m_var_bools.find(node->name) != m_var_bools.end())
     {
-        m_boolVars[node->name] = std::get<bool>(value->value);
+        m_var_bools[node->name] = std::get<bool>(value->value);
     }
-    else if (m_stringVars.find(node->name) != m_stringVars.end())
+    else if (m_var_strs.find(node->name) != m_var_strs.end())
     {
-        m_stringVars[node->name] = std::get<std::string>(value->value);
+        m_var_strs[node->name] = std::get<std::string>(value->value);
     }
     else
     {
@@ -391,20 +390,20 @@ std::unique_ptr<Value> Evaluator::visitStmtAssignment(const StmtAssignmentNode* 
     return value;
 }
 
-std::unique_ptr<Value> Evaluator::visitStmtCondition(const StmtConditionNode* node)
+std::unique_ptr<Value> Evaluator::_visit_stmt_condition(const StmtConditionNode* node)
 {
     for (const auto& branch : node->branches)
     {
         if (evaluate(branch.condition.get()))
             return evaluate(branch.block.get());
     }
-    if (node->elseBlock)
-        return evaluate(node->elseBlock.get());
+    if (node->else_block)
+        return evaluate(node->else_block.get());
 
     return std::make_unique<IntValue>(0);
 }
 
-std::unique_ptr<Value> Evaluator::visitStmtCompound(const StmtCompoundNode* node)
+std::unique_ptr<Value> Evaluator::_visit_stmt_compound(const StmtCompoundNode* node)
 {
     std::vector<std::unique_ptr<Value>> results;
     for (auto& stmt : node->statements)

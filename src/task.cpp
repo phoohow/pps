@@ -33,139 +33,139 @@ Task::Task()
 {
 }
 
-void Task::setContext(Context* context)
+void Task::set_ctx(Context* context)
 {
     m_context = context;
 }
 
-void Task::setContext(Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey)
+void Task::set_ctx(Context* context, sbin::Loader* module_loader, const std::string& decrypt_key)
 {
-    m_context       = context;
-    m_loader        = moduleLoader;
-    m_decryptionKey = decryptionKey;
+    m_context     = context;
+    m_loader      = module_loader;
+    m_decrypt_key = decrypt_key;
 }
 
 Task::State Task::process(std::string& line)
 {
-    auto originLine = line;
-    m_type          = extractTask(line);
+    auto origin_line = line;
+    m_type           = _extract_task(line);
 
     switch (m_type)
     {
         case Type::tOrigin:
-            processOrigin(line);
+            _process_origin(line);
             break;
         case Type::tMacro:
-            processStaticBranch(line);
-            processState();
+            _process_static_branch(line);
+            _process_state();
             break;
         case Type::tInstance:
-            line = processDynamicBranch(line);
-            processState();
+            line = _process_dynamic_branch(line);
+            _process_state();
             break;
         case Type::tInclude:
-            processInclude(line);
+            _process_include(line);
             break;
         case Type::tOverride:
-            processOverride(originLine, line);
+            _process_override(origin_line, line);
             break;
         case Type::tEmbed:
-            processEmbed(line);
+            _process_embed(line);
             break;
         case Type::tProg:
-            processProg(line);
+            _process_prog(line);
             break;
     }
 
     return m_state;
 }
 
-void Task::processOrigin(std::string& line)
+void Task::_process_origin(std::string& line)
 {
-    if (isSkip())
+    if (_is_skip())
         line = "";
 }
 
-void Task::evaluateStaticBranch(std::string& line)
+void Task::_eval_static_branch(std::string& line)
 {
     StaticBranch state;
-    state.type = extractBranchTag(line);
+    state.type = _extract_branch_tag(line);
 
     switch (state.type)
     {
         case BranchTag::tIf:
         {
-            if (inMissedBranch())
+            if (_in_miss_branch())
             {
                 state.current = false;
-                m_branchStack.push(state);
+                m_branch_stack.push(state);
                 break;
             }
 
-            state.current   = evaluateConditionExpr(line);
-            state.choosedIf = state.current;
-            m_branchStack.push(state);
+            state.current    = _eval_condition_expr(line);
+            state.choosed_if = state.current;
+            m_branch_stack.push(state);
             break;
         }
         case BranchTag::tElif:
         {
-            auto brother = popStatic();
-            if (inMissedBranch())
+            auto brother = _pop_static();
+            if (_in_miss_branch())
             {
                 state.current = false;
-                m_branchStack.push(state);
+                m_branch_stack.push(state);
                 break;
             }
 
-            if (brother.choosedIf)
+            if (brother.choosed_if)
             {
-                state.choosedIf = true;
-                state.current   = false;
+                state.choosed_if = true;
+                state.current    = false;
             }
             else
             {
-                state.current   = evaluateConditionExpr(line);
-                state.choosedIf = state.current;
+                state.current    = _eval_condition_expr(line);
+                state.choosed_if = state.current;
             }
 
-            m_branchStack.push(state);
+            m_branch_stack.push(state);
             break;
         }
         case BranchTag::tElse:
         {
-            auto brother = popStatic();
-            if (inMissedBranch())
+            auto brother = _pop_static();
+            if (_in_miss_branch())
             {
                 state.current = false;
-                m_branchStack.push(state);
+                m_branch_stack.push(state);
                 break;
             }
 
-            state.current = !brother.choosedIf;
-            m_branchStack.push(state);
+            state.current = !brother.choosed_if;
+            m_branch_stack.push(state);
             break;
         }
         case BranchTag::tEndif:
         {
-            m_branchStack.pop();
+            m_branch_stack.pop();
             break;
         }
     }
 }
 
-DynamicBranch Task::evaluateDynamicBranch(std::string& line)
+DynamicBranch Task::_eval_dynamic_banch(std::string& line)
 {
     DynamicBranch state;
-    state.type = extractBranchTag(line);
+    state.type = _extract_branch_tag(line);
 
     switch (state.type)
     {
         case BranchTag::tIf:
         {
-            if (inMissedBranch())
+            if (_in_miss_branch())
             {
                 state.current = false;
-                m_branchStack.push(state);
+                m_branch_stack.push(state);
                 break;
             }
 
@@ -176,26 +176,26 @@ DynamicBranch Task::evaluateDynamicBranch(std::string& line)
             ExprSimplifier simplifier(m_context->instances);
             auto           simplifiedNode = simplifier.simplify(root.get());
 
-            state.current = isValidConditionExpr(simplifiedNode.get());
+            state.current = _is_valid_condition_expr(simplifiedNode.get());
             if (state.current)
-                state.conditionExpr = generateConditionExpr(simplifiedNode.get());
+                state.condition_expr = _gen_condition_expr(simplifiedNode.get());
 
-            state.enableElse = state.current;
+            state.enable_else = state.current;
 
-            m_branchStack.push(state);
+            m_branch_stack.push(state);
             break;
         }
         case BranchTag::tElif:
         {
-            auto brother = popDynamic();
-            if (inMissedBranch())
+            auto brother = _pop_dynamic();
+            if (_in_miss_branch())
             {
                 state.current = false;
-                m_branchStack.push(state);
+                m_branch_stack.push(state);
                 break;
             }
 
-            if (!brother.enableElse)
+            if (!brother.enable_else)
                 state.type = BranchTag::tIf;
 
             Lexer          lexer(line);
@@ -205,32 +205,32 @@ DynamicBranch Task::evaluateDynamicBranch(std::string& line)
             ExprSimplifier simplifier(m_context->instances);
             auto           simplifiedNode = simplifier.simplify(root.get());
 
-            state.current = isValidConditionExpr(simplifiedNode.get());
+            state.current = _is_valid_condition_expr(simplifiedNode.get());
             if (state.current)
-                state.conditionExpr = generateConditionExpr(simplifiedNode.get());
+                state.condition_expr = _gen_condition_expr(simplifiedNode.get());
 
-            state.enableElse = brother.enableElse || state.current;
+            state.enable_else = brother.enable_else || state.current;
 
-            m_branchStack.push(state);
+            m_branch_stack.push(state);
             break;
         }
         case BranchTag::tElse:
         {
-            auto brother = popDynamic();
-            if (inMissedBranch())
+            auto brother = _pop_dynamic();
+            if (_in_miss_branch())
             {
                 state.current = false;
-                m_branchStack.push(state);
+                m_branch_stack.push(state);
                 break;
             }
 
-            state.current = brother.enableElse;
-            m_branchStack.push(state);
+            state.current = brother.enable_else;
+            m_branch_stack.push(state);
             break;
         }
         case BranchTag::tEndif:
         {
-            m_branchStack.pop();
+            m_branch_stack.pop();
             break;
         }
         default:
@@ -240,15 +240,15 @@ DynamicBranch Task::evaluateDynamicBranch(std::string& line)
     return state;
 }
 
-void Task::processStaticBranch(std::string& line)
+void Task::_process_static_branch(std::string& line)
 {
-    evaluateStaticBranch(line);
+    _eval_static_branch(line);
     line = "";
 }
 
-std::string Task::processDynamicBranch(std::string& line)
+std::string Task::_process_dynamic_branch(std::string& line)
 {
-    auto state = evaluateDynamicBranch(line);
+    auto state = _eval_dynamic_banch(line);
     if (!state.current)
         return "";
 
@@ -257,12 +257,12 @@ std::string Task::processDynamicBranch(std::string& line)
     {
         case BranchTag::tIf:
         {
-            expr += "if(" + state.conditionExpr + ")";
+            expr += "if(" + state.condition_expr + ")";
             break;
         }
         case BranchTag::tElif:
         {
-            expr += "elif(" + state.conditionExpr + ")";
+            expr += "elif(" + state.condition_expr + ")";
             break;
         }
         case BranchTag::tElse:
@@ -278,14 +278,14 @@ std::string Task::processDynamicBranch(std::string& line)
     return expr;
 }
 
-void Task::processInclude(std::string& path)
+void Task::_process_include(std::string& path)
 {
-    if (isSkip())
+    if (_is_skip())
         return;
 
     std::string content;
-    content += extractIncludeFromCTX(path);
-    content += extractIncludeFromLoader(path);
+    content += _extract_include_from_ctx(path);
+    content += _extract_include_from_loader(path);
 
     std::string        out;
     std::istringstream iss(content);
@@ -305,7 +305,7 @@ void Task::processInclude(std::string& path)
     path = out;
 }
 
-std::string Task::extractIncludeFromCTX(const std::string& path)
+std::string Task::_extract_include_from_ctx(const std::string& path)
 {
     std::string oldPath = path;
     for (const auto& prefix : m_context->prefixes)
@@ -332,7 +332,7 @@ std::string Task::extractIncludeFromCTX(const std::string& path)
     return "";
 }
 
-std::string Task::extractIncludeFromLoader(const std::string& path)
+std::string Task::_extract_include_from_loader(const std::string& path)
 {
     if (m_loader == nullptr)
     {
@@ -340,7 +340,7 @@ std::string Task::extractIncludeFromLoader(const std::string& path)
         return "";
     }
 
-    auto data = m_loader->get_shader(path, m_decryptionKey);
+    auto data = m_loader->get_shader(path, m_decrypt_key);
     if (data == nullptr)
     {
         ACLG_ERROR("Fail to load {} from loader.", path);
@@ -350,9 +350,9 @@ std::string Task::extractIncludeFromLoader(const std::string& path)
     return std::string(data->data.begin(), data->data.end());
 }
 
-void Task::processOverride(std::string& origin, std::string& expr)
+void Task::_process_override(std::string& origin, std::string& expr)
 {
-    if (isSkip())
+    if (_is_skip())
         return;
 
     auto iter = m_context->strings.find(expr);
@@ -367,19 +367,19 @@ void Task::processOverride(std::string& origin, std::string& expr)
     expr = std::regex_replace(origin, token_override_expr, iter->second);
 }
 
-void Task::processEmbed(std::string& expr)
+void Task::_process_embed(std::string& expr)
 {
-    if (isSkip())
+    if (_is_skip())
         return;
 }
 
-void Task::processProg(std::string& expr)
+void Task::_process_prog(std::string& expr)
 {
-    if (isSkip())
+    if (_is_skip())
         return;
 }
 
-Task::Type Task::extractTask(std::string& line)
+Task::Type Task::_extract_task(std::string& line)
 {
     std::smatch match_task;
     if (!std::regex_search(line, match_task, g_task))
@@ -423,7 +423,7 @@ Task::Type Task::extractTask(std::string& line)
     return Type::tOrigin;
 }
 
-BranchTag Task::extractBranchTag(std::string& line)
+BranchTag Task::_extract_branch_tag(std::string& line)
 {
     std::smatch match_tag;
     if (std::regex_search(line, match_tag, g_branch_elif))
@@ -450,7 +450,7 @@ BranchTag Task::extractBranchTag(std::string& line)
     return BranchTag::tEndif;
 }
 
-bool Task::hasBranchTrue(const std::vector<Token>& tokens)
+bool Task::_has_branch_true(const std::vector<Token>& tokens)
 {
     for (int i = 0; i < tokens.size(); i++)
     {
@@ -466,7 +466,7 @@ bool Task::hasBranchTrue(const std::vector<Token>& tokens)
     return false;
 }
 
-bool Task::isValidConditionExpr(const Node* node)
+bool Task::_is_valid_condition_expr(const Node* node)
 {
     Evaluator evaluator(&m_context->bools, &m_context->ints, &m_context->strings);
     auto      value = evaluator.evaluate(node);
@@ -474,7 +474,7 @@ bool Task::isValidConditionExpr(const Node* node)
     return value->type == ValueType::tBool;
 }
 
-bool Task::evaluateConditionExpr(const std::string& line)
+bool Task::_eval_condition_expr(const std::string& line)
 {
     Lexer lexer(line);
     auto  tokens = lexer.tokenize();
@@ -487,7 +487,7 @@ bool Task::evaluateConditionExpr(const std::string& line)
     return std::get<bool>(value->value);
 }
 
-std::string Task::generateConditionExpr(const Node* node)
+std::string Task::_gen_condition_expr(const Node* node)
 {
     ExprGenerator generator;
     auto          expr = generator.generate(node);
@@ -500,36 +500,36 @@ std::string Task::generateConditionExpr(const Node* node)
     return expr;
 }
 
-void Task::processState()
+void Task::_process_state()
 {
     if (m_type == Type::tMacro || m_type == Type::tInstance)
     {
-        m_state = inMissedBranch() ? State::sSkip : State::sKeep;
+        m_state = _in_miss_branch() ? State::sSkip : State::sKeep;
     }
 }
 
-bool Task::isSkip()
+bool Task::_is_skip()
 {
     return m_state == State::sSkip;
 }
 
-bool Task::inMissedBranch()
+bool Task::_in_miss_branch()
 {
-    return !m_branchStack.empty() &&
-        !std::visit([](const auto& b) { return b.current; }, m_branchStack.top());
+    return !m_branch_stack.empty() &&
+        !std::visit([](const auto& b) { return b.current; }, m_branch_stack.top());
 }
 
-StaticBranch Task::popStatic()
+StaticBranch Task::_pop_static()
 {
-    auto branch = std::get<StaticBranch>(m_branchStack.top());
-    m_branchStack.pop();
+    auto branch = std::get<StaticBranch>(m_branch_stack.top());
+    m_branch_stack.pop();
     return branch;
 }
 
-DynamicBranch Task::popDynamic()
+DynamicBranch Task::_pop_dynamic()
 {
-    auto branch = std::get<DynamicBranch>(m_branchStack.top());
-    m_branchStack.pop();
+    auto branch = std::get<DynamicBranch>(m_branch_stack.top());
+    m_branch_stack.pop();
     return branch;
 }
 

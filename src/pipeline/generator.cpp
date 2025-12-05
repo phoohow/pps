@@ -13,13 +13,13 @@ std::string ExprGenerator::generate(const Node* node)
     switch (node->type())
     {
         case NodeType::tVariable:
-            return generateVariableNode(static_cast<const VariableNode*>(node));
+            return _gen_variable_node(static_cast<const VariableNode*>(node));
 
         case NodeType::tOp_binary:
-            return generateBinaryOpNode(static_cast<const BinaryOpNode*>(node));
+            return _gen_binary_op_node(static_cast<const BinaryOpNode*>(node));
 
         case NodeType::tOp_unary:
-            return generateUnaryOpNode(static_cast<const UnaryOpNode*>(node));
+            return _gen_unary_op_node(static_cast<const UnaryOpNode*>(node));
 
         default:
             ACLG_ERROR("Unknown node type");
@@ -27,12 +27,12 @@ std::string ExprGenerator::generate(const Node* node)
     }
 }
 
-std::string ExprGenerator::generateVariableNode(const VariableNode* node)
+std::string ExprGenerator::_gen_variable_node(const VariableNode* node)
 {
     return node->name;
 }
 
-std::string ExprGenerator::generateBinaryOpNode(const BinaryOpNode* node)
+std::string ExprGenerator::_gen_binary_op_node(const BinaryOpNode* node)
 {
     std::string left  = generate(node->left.get());
     std::string right = generate(node->right.get());
@@ -46,7 +46,7 @@ std::string ExprGenerator::generateBinaryOpNode(const BinaryOpNode* node)
     return "";
 }
 
-std::string ExprGenerator::generateUnaryOpNode(const UnaryOpNode* node)
+std::string ExprGenerator::_gen_unary_op_node(const UnaryOpNode* node)
 {
     std::string child = generate(node->child.get());
 

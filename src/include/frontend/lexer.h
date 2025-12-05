@@ -89,7 +89,7 @@ class Lexer
     const std::string& m_source;
 
     size_t m_pos;
-    char   m_currentChar;
+    char   m_cur_char;
 
 public:
     explicit Lexer(const std::string& input);
@@ -97,15 +97,15 @@ public:
     std::vector<Token> tokenize();
 
 private:
-    Token next();
-    void  skipSpace();
-    char  peek(int n = 1) const;
-    void  advance(int n = 1);
-    bool  match(const std::string& pattern);
+    Token _next();
+    void  _skip_space();
+    char  _peek(int n = 1) const;
+    void  _advance(int n = 1);
+    bool  _match(const std::string& pattern);
 
-    Token literal_int();
-    Token literal_string();
-    Token variable();
+    Token _literal_int();
+    Token _literal_string();
+    Token _variable();
 };
 
 } // namespace pps

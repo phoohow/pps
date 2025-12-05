@@ -51,7 +51,7 @@ public:
 
     std::string process(const std::string& source, Context* context);
 
-    std::string process(const std::string& source, Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey);
+    std::string process(const std::string& source, Context* context, sbin::Loader* module_loader, const std::string& decrypt_key);
 
 private:
     std::string process(const std::string& source);

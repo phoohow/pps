@@ -99,11 +99,11 @@ public:
 class StmtDeclarationNode : public Node
 {
 public:
-    Token                 varType;
-    std::string           varName;
+    Token                 var_type;
+    std::string           name;
     std::unique_ptr<Node> value;
 
-    explicit StmtDeclarationNode(const Token& varType, const std::string& varName, std::unique_ptr<Node> value);
+    explicit StmtDeclarationNode(const Token& var_type, const std::string& name, std::unique_ptr<Node> value);
     void     print(int depth = 0) const override;
     NodeType type() const override { return NodeType::tStmt_declaration; }
 };
@@ -138,9 +138,9 @@ public:
         std::unique_ptr<Node> block;
     };
     std::vector<ConditionBlock> branches;
-    std::unique_ptr<Node>       elseBlock;
+    std::unique_ptr<Node>       else_block;
 
-    explicit StmtConditionNode(std::vector<ConditionBlock> branches, std::unique_ptr<Node> elseBlock);
+    explicit StmtConditionNode(std::vector<ConditionBlock> branches, std::unique_ptr<Node> else_block);
     void     print(int depth = 0) const override;
     NodeType type() const override { return NodeType::tStmt_condition; }
 };

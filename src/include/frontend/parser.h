@@ -20,28 +20,28 @@ public:
     std::unique_ptr<Node> parse();
 
 private:
-    std::unique_ptr<Node> op_logicalOr();
-    std::unique_ptr<Node> op_logicalAnd();
-    std::unique_ptr<Node> op_bitOr();
-    std::unique_ptr<Node> op_bitXor();
-    std::unique_ptr<Node> op_bitAnd();
-    std::unique_ptr<Node> op_equality();
-    std::unique_ptr<Node> op_relation();
-    std::unique_ptr<Node> op_shift();
-    std::unique_ptr<Node> op_additive();
-    std::unique_ptr<Node> op_multiplicative();
-    std::unique_ptr<Node> op_unary();
-    std::unique_ptr<Node> primary();
-    std::unique_ptr<Node> parse_statement();
-    std::unique_ptr<Node> stmt_declaration();
-    std::unique_ptr<Node> stmt_condition();
-    std::unique_ptr<Node> stmt_assignment();
-    std::unique_ptr<Node> stmt_expression();
+    std::unique_ptr<Node> _op_logic_or();
+    std::unique_ptr<Node> _op_logic_and();
+    std::unique_ptr<Node> _op_bit_or();
+    std::unique_ptr<Node> _op_bit_xor();
+    std::unique_ptr<Node> _op_bit_and();
+    std::unique_ptr<Node> _op_equality();
+    std::unique_ptr<Node> _op_relation();
+    std::unique_ptr<Node> _op_shift();
+    std::unique_ptr<Node> _op_additive();
+    std::unique_ptr<Node> _op_multiplicative();
+    std::unique_ptr<Node> _op_unary();
+    std::unique_ptr<Node> _primary();
+    std::unique_ptr<Node> _parse_statement();
+    std::unique_ptr<Node> _stmt_declaration();
+    std::unique_ptr<Node> _stmt_condition();
+    std::unique_ptr<Node> _stmt_assignment();
+    std::unique_ptr<Node> _stmt_expression();
 
-    Token peek(int n = 0) const;
-    Token consume();
-    bool  match(TokenType type);
-    bool  matchOneOf(std::initializer_list<TokenType> types);
+    Token _peek(int n = 0) const;
+    Token _consume();
+    bool  _match(TokenType type);
+    bool  _matchOneOf(std::initializer_list<TokenType> types);
 };
 
 } // namespace pps

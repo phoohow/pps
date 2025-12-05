@@ -6,7 +6,7 @@
 
 namespace pps
 {
-static int countBlank(const std::string& str)
+static int count_blank(const std::string& str)
 {
     size_t firstNonTab = str.find_first_not_of(' ');
     if (firstNonTab == std::string::npos)
@@ -16,39 +16,39 @@ static int countBlank(const std::string& str)
     return firstNonTab;
 }
 
-static bool startsWith(const std::string& str, const std::string& prefix)
+static bool start_with(const std::string& str, const std::string& prefix)
 {
     return str.rfind(prefix, 0) == 0;
 }
 
-static bool endsWith(const std::string& str, const std::string& suffix)
+static bool end_with(const std::string& str, const std::string& suffix)
 {
     return str.rfind(suffix) == (str.length() - suffix.length());
 }
 
-static void formatPPSIndent(std::string& line, int& indentLevel)
+static void format_pps_indent(std::string& line, int& indent_level)
 {
-    if (startsWith(line, "{"))
+    if (start_with(line, "{"))
     {
-        indentLevel++;
+        indent_level++;
     }
-    else if (startsWith(line, "}"))
+    else if (start_with(line, "}"))
     {
-        indentLevel = std::max(0, indentLevel - 1);
+        indent_level = std::max(0, indent_level - 1);
     }
     else
     {
-        auto currentIndent = countBlank(line);
-        if (currentIndent < indentLevel * 4)
+        auto currentIndent = count_blank(line);
+        if (currentIndent < indent_level * 4)
         {
-            line = std::string(indentLevel * 4, ' ') + line;
+            line = std::string(indent_level * 4, ' ') + line;
         }
     }
 }
 
-static void formatPPSEnter(std::string& line)
+static void format_pps_enter(std::string& line)
 {
-    if (endsWith(line, "}"))
+    if (end_with(line, "}"))
     {
         line += "\n";
     }
@@ -56,16 +56,16 @@ static void formatPPSEnter(std::string& line)
     line += "\n";
 }
 
-static void limitConsecutiveNewlines(std::string& str, int maxConsecutive = 2)
+static void limit_conherent_enters(std::string& str, int maxConsecutive = 2)
 {
     if (str.empty() || maxConsecutive < 0)
         return;
 
-    auto isWindowsNewline = [&](size_t pos) {
+    auto is_win_enter = [&](size_t pos) {
         return pos + 1 < str.length() && str[pos] == '\r' && str[pos + 1] == '\n';
     };
 
-    auto isAnyNewline = [&](size_t pos) {
+    auto is_non_win_enter = [&](size_t pos) {
         return str[pos] == '\n' || str[pos] == '\r';
     };
 
@@ -73,7 +73,7 @@ static void limitConsecutiveNewlines(std::string& str, int maxConsecutive = 2)
     int    newlineCount = 0;
     for (size_t i = 0; i < str.length(); ++i)
     {
-        if (isWindowsNewline(i))
+        if (is_win_enter(i))
         {
             newlineCount++;
             if (newlineCount <= maxConsecutive)
@@ -82,7 +82,7 @@ static void limitConsecutiveNewlines(std::string& str, int maxConsecutive = 2)
             }
             ++i;
         }
-        else if (isAnyNewline(i))
+        else if (is_non_win_enter(i))
         {
             newlineCount++;
             if (newlineCount <= maxConsecutive)
@@ -112,13 +112,13 @@ PPS::~PPS()
 
 std::string PPS::process(const std::string& source, Context* context)
 {
-    m_task->setContext(context);
+    m_task->set_ctx(context);
     return process(source);
 }
 
-std::string PPS::process(const std::string& source, Context* context, sbin::Loader* moduleLoader, const std::string& decryptionKey)
+std::string PPS::process(const std::string& source, Context* context, sbin::Loader* module_loader, const std::string& decrypt_key)
 {
-    m_task->setContext(context, moduleLoader, decryptionKey);
+    m_task->set_ctx(context, module_loader, decrypt_key);
     return process(source);
 }
 
@@ -128,7 +128,7 @@ std::string PPS::process(const std::string& source)
     std::string        line;
     std::string        output;
 
-    int indentLevel = 0;
+    int indent_level = 0;
 
     while (std::getline(iss, line))
     {
@@ -136,12 +136,12 @@ std::string PPS::process(const std::string& source)
         if (line.empty())
             continue;
 
-        formatPPSIndent(line, indentLevel);
+        format_pps_indent(line, indent_level);
 
         output += line;
     }
 
-    limitConsecutiveNewlines(output);
+    limit_conherent_enters(output);
 
     return output;
 }
