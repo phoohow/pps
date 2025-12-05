@@ -113,6 +113,7 @@ Token Lexer::_next()
                     _advance(2);
                     return Token(TokenType::tOp_bitRMove, ">>");
                 }
+                break;
             }
             case '<':
             {
@@ -131,6 +132,7 @@ Token Lexer::_next()
                     _advance(2);
                     return Token(TokenType::tOp_bitLMove, "<<");
                 }
+                break;
             }
             case '0':
             case '1':
@@ -165,6 +167,7 @@ Token Lexer::_next()
                     _advance(2);
                     return Token(TokenType::tOp_and, "&&");
                 }
+                break;
             }
             case '|':
             {
@@ -178,6 +181,7 @@ Token Lexer::_next()
                     _advance(2);
                     return Token(TokenType::tOp_or, "||");
                 }
+                break;
             }
             case '!':
             {
@@ -191,6 +195,7 @@ Token Lexer::_next()
                     _advance(3);
                     return Token(TokenType::tOp_unequal, "!=");
                 }
+                break;
             }
             case '=':
             {
@@ -204,6 +209,7 @@ Token Lexer::_next()
                     _advance(3);
                     return Token(TokenType::tOp_equal, "==");
                 }
+                break;
             }
             case 'b':
                 if (_match("bool "))
@@ -211,6 +217,7 @@ Token Lexer::_next()
                     _advance(5);
                     return Token(TokenType::tType_bool, "bool");
                 }
+                break;
             case 'e':
             {
                 if (_match("elif "))
@@ -228,6 +235,7 @@ Token Lexer::_next()
                     _advance(5);
                     return Token(TokenType::tCondition_endif, "endif");
                 }
+                break;
             }
             case 'i':
                 if (_match("if "))
@@ -240,32 +248,35 @@ Token Lexer::_next()
                     _advance(4);
                     return Token(TokenType::tType_int, "int");
                 }
+                break;
             case 's':
                 if (_match("string "))
                 {
                     _advance(7);
                     return Token(TokenType::tType_string, "string");
                 }
+                break;
             case 't':
                 if (_match("true"))
                 {
                     _advance(4);
                     return Token(TokenType::tLit_bool, "true");
                 }
+                break;
             case 'f':
                 if (_match("false"))
                 {
                     _advance(5);
                     return Token(TokenType::tLit_bool, "false");
                 }
-
+                break;
             default:
             {
-                ACLG_ERROR("Unknown token: {} in position {}", m_cur_char, m_pos);
+                ACLG_ERROR("Undefined token '{}'(pos {}) in: '{}'", m_cur_char, m_pos, m_source);
             }
         }
 
-        ACLG_ERROR("Unknown token: {} in position {}", m_cur_char, m_pos);
+        ACLG_ERROR("Undefined token '{}'(pos {}) in: '{}'", m_cur_char, m_pos, m_source);
         return Token(TokenType::tError, std::string(1, m_cur_char));
     }
 
